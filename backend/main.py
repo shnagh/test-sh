@@ -2,7 +2,6 @@ import os
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session, joinedload
-
 import models
 import schemas
 from database import engine, get_db
@@ -11,15 +10,22 @@ USE_MOCK_DB = os.getenv("USE_MOCK_DB", "true").lower() == "true"
 
 app = FastAPI(title="Study Program Backend")
 
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://172.21.252.23:3000"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+
 print("✅ Backend started | USE_MOCK_DB =", USE_MOCK_DB)
+print(">>> TEST COMMIT FROM IT-ALEX <<<")
 
 # SOLO crear tablas si estás en DB real
 if not USE_MOCK_DB:
