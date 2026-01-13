@@ -7,12 +7,12 @@ from database import engine, get_db
 
 app = FastAPI(title="Study Program Backend")
 
+# --- STANDARD LOCAL CORS ---
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://172.21.252.23:3000"
+        "http://127.0.0.1:3000"
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -83,12 +83,10 @@ def delete_program(program_id: int, db: Session = Depends(get_db)):
 # =========================
 @app.post("/specializations/", response_model=schemas.SpecializationResponse)
 def create_specialization(spec: schemas.SpecializationCreate, db: Session = Depends(get_db)):
-    # 1. Check if program exists
     program = db.query(models.StudyProgram).filter(models.StudyProgram.id == spec.program_id).first()
     if not program:
         raise HTTPException(status_code=404, detail="Program not found")
 
-    # 2. Create the specialization
     db_spec = models.Specialization(**spec.model_dump())
     db.add(db_spec)
     db.commit()
@@ -102,12 +100,10 @@ def update_specialization(spec_id: int, spec: schemas.SpecializationCreate, db: 
     if not db_spec:
         raise HTTPException(status_code=404, detail="Specialization not found")
 
-    # Update fields
     db_spec.name = spec.name
     db_spec.acronym = spec.acronym
     db_spec.start_date = spec.start_date
     db_spec.is_active = spec.is_active
-    # We generally don't change program_id, but we can if needed
 
     db.commit()
     db.refresh(db_spec)
@@ -252,7 +248,7 @@ def delete_group(group_id: int, db: Session = Depends(get_db)):
 
 
 # =========================================================
-# SCHEDULER CONSTRAINTS
+# SCHEDULER CONSTRAINTS & ROOMS
 # =========================================================
 
 @app.get("/constraint-types/", response_model=list[schemas.ConstraintTypeResponse])
@@ -260,11 +256,92 @@ def read_constraint_types(db: Session = Depends(get_db)):
     return db.query(models.ConstraintType).order_by(models.ConstraintType.id.asc()).all()
 
 
+# --- ROOMS CRUD ---
+
 @app.get("/rooms/", response_model=list[schemas.RoomResponse])
 def read_rooms(db: Session = Depends(get_db)):
     return db.query(models.Room).order_by(models.Room.id.asc()).all()
 
 
+@app.post("/rooms/", response_model=schemas.RoomResponse)
+def create_room(room: schemas.RoomCreate, db: Session = Depends(get_db)):
+    db_room = models.Room(**room.model_dump())
+    db.add(db_room)
+    db.commit()
+    db.refresh(db_room)
+    return db_room
+
+
+@app.put("/rooms/{room_id}", response_model=schemas.RoomResponse)
+def update_room(room_id: int, room: schemas.RoomCreate, db: Session = Depends(get_db)):
+    db_room = db.query(models.Room).filter(models.Room.id == room_id).first()
+    if not db_room:
+        raise HTTPException(status_code=404, detail="Room not found")
+
+    # Update fields to match new model
+    db_room.name = room.name
+    db_room.capacity = room.capacity
+    db_room.type = room.type
+    db_room.available = room.available
+
+    db.commit()
+    db.refresh(db_room)
+    return db_room
+
+
+@app.delete("/rooms/{room_id}")
+def delete_room(room_id: int, db: Session = Depends(get_db)):
+    db_room = db.query(models.Room).filter(models.Room.id == room_id).first()
+    if not db_room:
+        raise HTTPException(status_code=404, detail="Room not found")
+
+    db.delete(db_room)
+    db.commit()
+    return {"ok": True}
+
+
+# --- CONSTRAINTS CRUD (NEW) ---
+
 @app.get("/scheduler-constraints/", response_model=list[schemas.SchedulerConstraintResponse])
 def read_scheduler_constraints(db: Session = Depends(get_db)):
     return db.query(models.SchedulerConstraint).order_by(models.SchedulerConstraint.id.asc()).all()
+
+
+@app.post("/scheduler-constraints/", response_model=schemas.SchedulerConstraintResponse)
+def create_constraint(c: schemas.SchedulerConstraintCreate, db: Session = Depends(get_db)):
+    db_c = models.SchedulerConstraint(**c.model_dump())
+    db.add(db_c)
+    db.commit()
+    db.refresh(db_c)
+    return db_c
+
+
+@app.put("/scheduler-constraints/{id}", response_model=schemas.SchedulerConstraintResponse)
+def update_constraint(id: int, c: schemas.SchedulerConstraintCreate, db: Session = Depends(get_db)):
+    db_c = db.query(models.SchedulerConstraint).filter(models.SchedulerConstraint.id == id).first()
+    if not db_c:
+        raise HTTPException(status_code=404, detail="Constraint not found")
+
+    for k, v in c.model_dump().items():
+        setattr(db_c, k, v)
+
+    db.commit()
+    db.refresh(db_c)
+    return db_c
+
+
+@app.delete("/scheduler-constraints/{id}")
+def delete_constraint(id: int, db: Session = Depends(get_db)):
+    db_c = db.query(models.SchedulerConstraint).filter(models.SchedulerConstraint.id == id).first()
+    if not db_c:
+        raise HTTPException(status_code=404, detail="Constraint not found")
+
+    db.delete(db_c)
+    db.commit()
+    return {"ok": True}
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)

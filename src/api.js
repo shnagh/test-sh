@@ -1,6 +1,5 @@
 import axios from "axios";
 
-// Make sure this points to your Python backend port (8000)
 const API_URL = "http://localhost:8000";
 
 const api = {
@@ -33,6 +32,24 @@ const api = {
   },
   deleteSpecialization: async (id) => {
     const response = await axios.delete(`${API_URL}/specializations/${id}`);
+    return response.data;
+  },
+
+  // --- ROOMS ---
+  getRooms: async () => {
+    const response = await axios.get(`${API_URL}/rooms/`);
+    return response.data;
+  },
+  createRoom: async (data) => {
+    const response = await axios.post(`${API_URL}/rooms/`, data);
+    return response.data;
+  },
+  updateRoom: async (id, data) => {
+    const response = await axios.put(`${API_URL}/rooms/${id}`, data);
+    return response.data;
+  },
+  deleteRoom: async (id) => {
+    const response = await axios.delete(`${API_URL}/rooms/${id}`);
     return response.data;
   },
 
@@ -87,6 +104,28 @@ const api = {
   },
   deleteModule: async (id) => {
     const response = await axios.delete(`${API_URL}/modules/${id}`);
+    return response.data;
+  },
+
+  // --- CONSTRAINTS (NEW) ---
+  getConstraintTypes: async () => {
+    const response = await axios.get(`${API_URL}/constraint-types/`);
+    return response.data;
+  },
+  getConstraints: async () => {
+    const response = await axios.get(`${API_URL}/scheduler-constraints/`);
+    return response.data;
+  },
+  createConstraint: async (data) => {
+    const response = await axios.post(`${API_URL}/scheduler-constraints/`, data);
+    return response.data;
+  },
+  updateConstraint: async (id, data) => {
+    const response = await axios.put(`${API_URL}/scheduler-constraints/${id}`, data);
+    return response.data;
+  },
+  deleteConstraint: async (id) => {
+    const response = await axios.delete(`${API_URL}/scheduler-constraints/${id}`);
     return response.data;
   },
 };

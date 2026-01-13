@@ -54,6 +54,19 @@ const styles = {
     padding: "10px 15px",
     verticalAlign: "middle",
   },
+  // Status Badge for "Available"
+  statusBadge: (isAvailable) => ({
+    display: "inline-block",
+    padding: "4px 8px",
+    borderRadius: "4px",
+    fontSize: "0.8rem",
+    fontWeight: "bold",
+    backgroundColor: isAvailable ? "#d4edda" : "#f8d7da",
+    color: isAvailable ? "#155724" : "#721c24",
+    border: isAvailable ? "1px solid #c3e6cb" : "1px solid #f5c6cb",
+    textAlign: "center",
+    minWidth: "60px",
+  }),
   btn: {
     padding: "6px 12px",
     borderRadius: "4px",
@@ -81,122 +94,125 @@ const styles = {
     width: "100%", padding: "8px", borderRadius: "4px",
     border: "1px solid #ccc", fontSize: "1rem", boxSizing: "border-box",
   },
+  checkboxWrapper: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    cursor: "pointer",
+    fontSize: "0.95rem",
+  },
 };
 
-export default function GroupOverview() {
-  const [groups, setGroups] = useState([]);
+export default function RoomOverview() {
+  const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState(""); // Added search state
   const [formMode, setFormMode] = useState("overview");
   const [editingId, setEditingId] = useState(null);
 
   const [draft, setDraft] = useState({
-    groupName: "",
-    size: "",
-    description: "",
-    email: "",
+    name: "",
+    capacity: "",
+    type: "Lecture Classroom",
+    available: true,
   });
 
-  async function loadGroups() {
+  async function loadRooms() {
     setLoading(true);
     try {
-      const data = await api.getGroups();
-      const mapped = (Array.isArray(data) ? data : []).map((x) => ({
-        id: x.id,
-        groupName: x.group_name,
-        size: x.size,
-        description: x.description || "",
-        email: x.email || "",
-      }));
-      setGroups(mapped);
+      const data = await api.getRooms();
+      setRooms(Array.isArray(data) ? data : []);
     } catch (e) {
-      alert("Error loading groups: " + e.message);
-      setGroups([]);
+      alert("Error loading rooms: " + e.message);
     } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => {
-    loadGroups();
+    loadRooms();
   }, []);
 
   function openAdd() {
     setEditingId(null);
-    setDraft({ groupName: "", size: "", description: "", email: "" });
+    setDraft({
+      name: "",
+      capacity: "",
+      type: "Lecture Classroom",
+      available: true,
+    });
     setFormMode("add");
   }
 
-  function openEdit(row) {
-    setEditingId(row.id);
+  function openEdit(r) {
+    setEditingId(r.id);
     setDraft({
-      groupName: row.groupName || "",
-      size: String(row.size ?? ""),
-      description: row.description || "",
-      email: row.email || "",
+      name: r.name,
+      capacity: r.capacity,
+      type: r.type,
+      available: r.available,
     });
     setFormMode("edit");
   }
 
   async function save() {
-    if (!draft.groupName.trim()) return alert("Group name is required");
-    if (!String(draft.size).trim()) return alert("Size is required");
+    if (!draft.name.trim() || !draft.capacity) {
+      return alert("Name and Capacity are required.");
+    }
 
     const payload = {
-      group_name: draft.groupName.trim(),
-      size: Number(draft.size),
-      description: draft.description.trim() || null,
-      email: draft.email.trim() || null,
+      name: draft.name.trim(),
+      capacity: Number(draft.capacity),
+      type: draft.type,
+      available: !!draft.available,
     };
 
     try {
       if (formMode === "add") {
-        await api.createGroup(payload);
+        await api.createRoom(payload);
       } else {
-        await api.updateGroup(editingId, payload);
+        await api.updateRoom(editingId, payload);
       }
-      await loadGroups();
+      await loadRooms();
       setFormMode("overview");
-      setEditingId(null);
     } catch (e) {
       console.error(e);
-      alert("Backend error while saving group.");
+      alert("Backend error while saving room.");
     }
   }
 
   async function remove(id) {
-    if (!window.confirm("Delete this group?")) return;
+    if (!window.confirm("Delete this room?")) return;
     try {
-      await api.deleteGroup(id);
-      loadGroups();
+      await api.deleteRoom(id);
+      loadRooms();
     } catch (e) {
       console.error(e);
-      alert("Backend error while deleting group.");
+      alert("Backend error while deleting room.");
     }
   }
 
-  // Search Logic
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return groups;
-    return groups.filter((g) =>
-      g.groupName.toLowerCase().includes(q) ||
-      g.description.toLowerCase().includes(q)
+    if (!q) return rooms;
+    return rooms.filter((r) =>
+      r.name.toLowerCase().includes(q) ||
+      r.type.toLowerCase().includes(q)
     );
-  }, [groups, query]);
+  }, [rooms, query]);
 
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <h2 style={styles.title}>Group Overview</h2>
+        <h2 style={styles.title}>Room Overview</h2>
         <button style={{...styles.btn, ...styles.primaryBtn}} onClick={openAdd}>
-          + New Group
+          + New Room
         </button>
       </div>
 
       <input
         style={styles.searchBar}
-        placeholder="Search groups..."
+        placeholder="Search rooms..."
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />
@@ -205,25 +221,29 @@ export default function GroupOverview() {
         <table style={styles.table}>
           <thead style={styles.thead}>
             <tr>
-              <th style={styles.th}>Group Name</th>
-              <th style={styles.th}>Size</th>
-              <th style={styles.th}>Description</th>
-              <th style={styles.th}>Email</th>
+              <th style={styles.th}>Room Name</th>
+              <th style={styles.th}>Type</th>
+              <th style={styles.th}>Capacity</th>
+              <th style={{...styles.th, textAlign:'center'}}>Status</th>
               <th style={{...styles.th, textAlign:'right'}}>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {filtered.map((g) => (
-              <tr key={g.id} style={styles.tr}>
-                <td style={styles.td}><strong>{g.groupName}</strong></td>
-                <td style={styles.td}>{g.size}</td>
-                <td style={{...styles.td, color: '#666', fontSize:'0.85rem'}}>{g.description || "-"}</td>
-                <td style={styles.td}>{g.email || "-"}</td>
+            {filtered.map((r) => (
+              <tr key={r.id} style={styles.tr}>
+                <td style={styles.td}><strong>{r.name}</strong></td>
+                <td style={styles.td}>{r.type}</td>
+                <td style={styles.td}>{r.capacity}</td>
+                <td style={{...styles.td, textAlign:'center'}}>
+                  <span style={styles.statusBadge(r.available)}>
+                    {r.available ? 'Available' : 'Occupied'}
+                  </span>
+                </td>
                 <td style={{...styles.td, textAlign:'right'}}>
-                  <button style={{...styles.btn, ...styles.editBtn}} onClick={() => openEdit(g)}>
+                  <button style={{...styles.btn, ...styles.editBtn}} onClick={() => openEdit(r)}>
                     Edit
                   </button>
-                  <button style={{...styles.btn, ...styles.deleteBtn}} onClick={() => remove(g.id)}>
+                  <button style={{...styles.btn, ...styles.deleteBtn}} onClick={() => remove(r.id)}>
                     Delete
                   </button>
                 </td>
@@ -238,49 +258,55 @@ export default function GroupOverview() {
         <div style={styles.modalOverlay}>
             <div style={styles.modalContent}>
                 <div style={{display:'flex', justifyContent:'space-between', marginBottom:'20px'}}>
-                    <h3 style={{margin:0}}>{formMode === "add" ? "Create Group" : "Edit Group"}</h3>
+                    <h3 style={{margin:0}}>{formMode === "add" ? "Create Room" : "Edit Room"}</h3>
                     <button onClick={() => setFormMode("overview")} style={{border:'none', background:'transparent', fontSize:'1.5rem', cursor:'pointer'}}>×</button>
                 </div>
 
                 <div style={styles.formGroup}>
-                    <label style={styles.label}>Group Name</label>
+                    <label style={styles.label}>Room Name</label>
                     <input
                       style={styles.input}
-                      value={draft.groupName}
-                      onChange={(e) => setDraft({ ...draft, groupName: e.target.value })}
-                      placeholder="e.g., BIT 1024"
+                      value={draft.name}
+                      onChange={e => setDraft({...draft, name: e.target.value})}
+                      placeholder="e.g. A-101"
                     />
                 </div>
 
-                <div style={styles.formGroup}>
-                    <label style={styles.label}>Student Count</label>
-                    <input
-                      type="number"
-                      style={styles.input}
-                      value={draft.size}
-                      onChange={(e) => setDraft({ ...draft, size: e.target.value })}
-                      placeholder="e.g., 25"
-                    />
+                <div style={{display:'flex', gap:'15px', marginBottom:'15px'}}>
+                    <div style={{flex:1}}>
+                        <label style={styles.label}>Type</label>
+                        <select
+                          style={styles.input}
+                          value={draft.type}
+                          onChange={e => setDraft({...draft, type: e.target.value})}
+                        >
+                          <option value="Lecture Classroom">Lecture Classroom</option>
+                          <option value="Computer Lab">Computer Lab</option>
+                          <option value="Game Design">Game Design</option>
+                          <option value="Seminar">Seminar</option>
+                        </select>
+                    </div>
+                    <div style={{flex:1}}>
+                        <label style={styles.label}>Capacity</label>
+                        <input
+                          type="number"
+                          style={styles.input}
+                          value={draft.capacity}
+                          onChange={e => setDraft({...draft, capacity: e.target.value})}
+                          placeholder="e.g. 30"
+                        />
+                    </div>
                 </div>
 
                 <div style={styles.formGroup}>
-                    <label style={styles.label}>Description</label>
-                    <input
-                      style={styles.input}
-                      value={draft.description}
-                      onChange={(e) => setDraft({ ...draft, description: e.target.value })}
-                      placeholder="e.g., Information Technology B.Sc."
-                    />
-                </div>
-
-                <div style={styles.formGroup}>
-                    <label style={styles.label}>Group Email</label>
-                    <input
-                      style={styles.input}
-                      value={draft.email}
-                      onChange={(e) => setDraft({ ...draft, email: e.target.value })}
-                      placeholder="e.g., bit1024@mdh.de"
-                    />
+                    <label style={styles.checkboxWrapper}>
+                        <input
+                            type="checkbox"
+                            checked={draft.available}
+                            onChange={e => setDraft({...draft, available: e.target.checked})}
+                        />
+                        Room is currently available
+                    </label>
                 </div>
 
                 <div style={{marginTop: '25px', display:'flex', justifyContent:'flex-end', gap:'10px'}}>

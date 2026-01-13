@@ -11,7 +11,7 @@ export default function ScheduleOverview() {
 
   const [draft, setDraft] = useState({
     moduleName: "",
-    roomType: "lecture",
+    roomType: "Lecture Classroom", // Set a valid default
     sessionsPerWeek: 1,
     semester: 1,
     totalSessions: 14,
@@ -42,7 +42,7 @@ export default function ScheduleOverview() {
     setEditingId(null);
     setDraft({
       moduleName: "",
-      roomType: "lecture",
+      roomType: "Lecture Classroom", // Reset to valid default
       sessionsPerWeek: 1,
       semester: 1,
       totalSessions: 14,
@@ -190,13 +190,18 @@ export default function ScheduleOverview() {
             />
           </label>
 
+          {/* UPDATED: Dropdown matching Room Overview */}
           <label>
             Room Type:
-            <input
+            <select
               value={draft.roomType}
               onChange={(e) => setDraft({ ...draft, roomType: e.target.value })}
-              placeholder="lecture / lab"
-            />
+            >
+              <option value="Lecture Classroom">Lecture Classroom</option>
+              <option value="Computer Lab">Computer Lab</option>
+              <option value="Game Design">Game Design</option>
+              <option value="Seminar">Seminar</option>
+            </select>
           </label>
 
           <label>
@@ -246,11 +251,14 @@ export default function ScheduleOverview() {
 
           <label>
             Onsite/Online:
-            <input
+            <select
               value={draft.onsiteOnline}
               onChange={(e) => setDraft({ ...draft, onsiteOnline: e.target.value })}
-              placeholder="Onsite / Online / Hybrid"
-            />
+            >
+              <option value="Onsite">Onsite</option>
+              <option value="Online">Online</option>
+              <option value="Hybrid">Hybrid</option>
+            </select>
           </label>
 
           <div className="buttons">
