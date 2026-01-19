@@ -7,6 +7,7 @@ class SpecializationCreate(BaseModel):
     acronym: str
     start_date: str
     is_active: bool
+    program_id: int  # <--- ADDED THIS so the backend knows which program it belongs to
 
 
 class SpecializationResponse(SpecializationCreate):
@@ -62,6 +63,7 @@ class LecturerCreate(BaseModel):
     employment_type: str
     personal_email: Optional[str] = None
     mdh_email: Optional[str] = None
+    phone: Optional[str] = None
 
 
 class LecturerResponse(LecturerCreate):
@@ -88,7 +90,7 @@ class GroupResponse(GroupCreate):
 
 
 # =========================================================
-# SCHEDULER CONSTRAINTS (NEW)
+# SCHEDULER CONSTRAINTS
 # =========================================================
 
 Hardness = Literal["HARD", "SOFT"]
@@ -111,9 +113,9 @@ class ConstraintTypeResponse(ConstraintTypeCreate):
 
 class RoomCreate(BaseModel):
     name: str
-    capacity: int = Field(ge=0)
-    capabilities: List[str] = []
-    is_active: bool = True
+    capacity: int
+    type: str
+    available: bool = True
 
 
 class RoomResponse(RoomCreate):
@@ -127,10 +129,8 @@ class SchedulerConstraintCreate(BaseModel):
     constraint_type_id: int
     hardness: Hardness
     weight: Optional[int] = Field(default=None, ge=0)
-
     scope: Scope
     target_id: Optional[int] = None
-
     config: Dict[str, Any] = {}
     is_enabled: bool = True
     notes: Optional[str] = None

@@ -4,7 +4,9 @@ import "./App.css";
 import ProgramOverview from "./Components/ProgramOverview";
 import LecturerOverview from "./Components/LecturerOverview";
 import GroupOverview from "./Components/GroupOverview";
-import ScheduleOverview from "./Components/ScheduleOverview";
+import ModuleOverview from "./Components/ModuleOverview";
+import RoomOverview from "./Components/RoomOverview";
+import ConstraintOverview from "./Components/ConstraintOverview"; // <--- Import
 
 export default function App() {
   const [page, setPage] = useState("programs");
@@ -17,14 +19,17 @@ export default function App() {
         {page === "programs" && <ProgramOverview />}
         {page === "groups" && <GroupOverview />}
         {page === "lecturers" && <LecturerOverview />}
-        {page === "schedule" && <ScheduleOverview />}
+        {page === "modules" && <ModuleOverview />}
+        {page === "rooms" && <RoomOverview />}
+        {page === "constraints" && <ConstraintOverview />} {/* <--- Add Route */}
       </div>
     </div>
   );
 }
 
 function Topbar({ page, setPage }) {
-  const tabs = ["programs", "groups", "lecturers", "schedule"];
+  // Add "constraints" to the tabs list
+  const tabs = ["programs", "groups", "lecturers", "modules", "rooms", "constraints"];
 
   return (
     <div className="topbar">
