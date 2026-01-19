@@ -1,8 +1,13 @@
-const BASE_URL = "http://127.0.0.1:8000";
+// src/api.js
+
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 async function request(path, options = {}) {
-  const res = await fetch(`${BASE_URL}${path}`, {
-    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+  const res = await fetch(`${API_BASE_URL}${path}`, {
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.headers || {}),
+    },
     ...options,
   });
 
