@@ -1,37 +1,19 @@
 import { useEffect, useState } from "react";
 import api from "../api";
-
-const styles = {
-  container: { padding: "20px", fontFamily: "'Segoe UI', sans-serif", color: "#333", maxWidth: "100%" },
-  header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", borderBottom: "1px solid #ccc", paddingBottom: "15px" },
-  title: { margin: 0, fontSize: "1.5rem", color: "#333" },
-  table: { width: "100%", borderCollapse: "collapse", background: "#fff", border: "1px solid #ddd", fontSize: "0.9rem" },
-  thead: { background: "#f2f2f2", borderBottom: "2px solid #ccc" },
-  th: { textAlign: "left", padding: "10px 15px", fontWeight: "600", color: "#ffffff" },
-  td: { padding: "10px 15px", verticalAlign: "middle", borderBottom: "1px solid #eee" },
-  // Buttons
-  btn: { padding: "8px 16px", borderRadius: "6px", border: "none", cursor: "pointer", fontSize: "0.9rem", marginLeft: "5px", background: "#007bff", color: "white" },
-  editBtn: { background: "#6c757d", color: "white", padding: "6px 12px", borderRadius: "4px", border: "none", cursor: "pointer", marginRight: "5px" },
-  deleteBtn: { background: "#dc3545", color: "white", padding: "6px 12px", borderRadius: "4px", border: "none", cursor: "pointer" },
-  // Modal
-  modalOverlay: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000 },
-  modalContent: { background: "white", padding: "30px", borderRadius: "12px", width: "600px", maxHeight: "90vh", overflowY: "auto", boxShadow: "0 10px 30px rgba(0,0,0,0.2)" },
-  formGroup: { marginBottom: "20px" },
-  label: { display: "block", marginBottom: "8px", fontWeight: "bold", fontSize: "0.95rem" },
-  input: { width: "100%", padding: "10px", borderRadius: "6px", border: "1px solid #ccc", fontSize: "1rem", boxSizing: "border-box" },
-  helper: { fontSize: "0.85rem", color: "#666", marginTop: "5px" }
-};
+import "./ConstraintOverview.css"; // Ensure this filename matches your CSS file
 
 export default function ConstraintOverview() {
   const [constraints, setConstraints] = useState([]);
   const [types, setTypes] = useState([]);
-  const [targets, setTargets] = useState({ LECTURER: [], GROUP: [], MODULE: [], ROOM: [], GLOBAL: [{ id: 0, name: "Global (All)" }] });
+  const [targets, setTargets] = useState({ 
+    LECTURER: [], GROUP: [], MODULE: [], ROOM: [], GLOBAL: [{ id: 0, name: "Global (All)" }] 
+  });
 
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingId, setEditingId] = useState(null); // Track if we are editing
+  const [editingId, setEditingId] = useState(null);
   const [draft, setDraft] = useState(null);
 
-  // Hardcoded options for the UI helpers
+  // Constants for form helpers
   const ROOM_TYPES = ["Lecture Classroom", "Computer Lab", "Game Design", "Seminar"];
   const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 
@@ -52,43 +34,40 @@ export default function ConstraintOverview() {
         MODULE: mData.map(x => ({ id: x.module_id, name: x.module_name })),
         ROOM: rData.map(x => ({ id: x.id, name: x.name })),
       }));
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error("Data load failed:", e); }
   }
 
   function openAdd() {
-    setEditingId(null); // Clear editing ID
+    setEditingId(null);
     setDraft({
+      name: "",
       constraint_type_id: types[0]?.id || 1,
       hardness: "HARD",
       scope: "GLOBAL",
       target_id: 0,
+      valid_from: "2026-04-01",
+      valid_to: "2026-09-30",
+      constraint_rule: "",
+      active: true,
       config: {}
     });
     setModalOpen(true);
   }
 
   function openEdit(c) {
-    setEditingId(c.id); // Set the ID we are editing
-    setDraft({
-      constraint_type_id: c.constraint_type_id,
-      hardness: c.hardness,
-      scope: c.scope,
-      target_id: c.target_id,
-      config: c.config || {} // Load existing config
-    });
+    setEditingId(c.id);
+    setDraft({ ...c });
     setModalOpen(true);
   }
 
   async function save() {
     try {
       const payload = { ...draft, target_id: Number(draft.target_id) };
-
       if (editingId) {
-        await api.updateConstraint(editingId, payload); // Update if ID exists
+        await api.updateConstraint(editingId, payload);
       } else {
-        await api.createConstraint(payload); // Create if new
+        await api.createConstraint(payload);
       }
-
       setModalOpen(false);
       loadData();
     } catch (e) { alert("Error saving constraint."); }
@@ -100,16 +79,15 @@ export default function ConstraintOverview() {
     loadData();
   }
 
-  // --- Dynamic Form Renderer ---
   const renderParameters = () => {
-    const activeCode = types.find(t => t.id == draft.constraint_type_id)?.code;
+    const activeCode = types.find(t => t.id === Number(draft.constraint_type_id))?.code;
 
     if (activeCode === "REQUIRED_ROOM_TYPE" || activeCode === "AVOID_ROOM_TYPE") {
         return (
-            <div style={styles.formGroup}>
-                <label style={styles.label}>Which Room Type?</label>
+            <div className="formGroup">
+                <label className="label">Room Type (Format: String)</label>
                 <select
-                    style={styles.input}
+                    className="input"
                     value={draft.config.room_type || ""}
                     onChange={e => setDraft({...draft, config: { room_type: e.target.value }})}
                 >
@@ -122,10 +100,10 @@ export default function ConstraintOverview() {
 
     if (activeCode === "TEACHER_UNAVAILABLE") {
         return (
-            <div style={styles.formGroup}>
-                <label style={styles.label}>Which Day?</label>
+            <div className="formGroup">
+                <label className="label">Day (Format: String)</label>
                 <select
-                    style={styles.input}
+                    className="input"
                     value={draft.config.day || ""}
                     onChange={e => setDraft({...draft, config: { day: e.target.value }})}
                 >
@@ -136,86 +114,74 @@ export default function ConstraintOverview() {
         );
     }
 
-    if (activeCode === "GLOBAL_TIME_BLOCK") {
-        return (
-            <div style={{display:'flex', gap:'10px'}}>
-                <div style={{flex:1}}>
-                    <label style={styles.label}>Start Time</label>
-                    <input type="time" style={styles.input} value={draft.config.start || ""} onChange={e => setDraft({...draft, config: {...draft.config, start: e.target.value}})} />
-                </div>
-                <div style={{flex:1}}>
-                    <label style={styles.label}>End Time</label>
-                    <input type="time" style={styles.input} value={draft.config.end || ""} onChange={e => setDraft({...draft, config: {...draft.config, end: e.target.value}})} />
-                </div>
-            </div>
-        );
-    }
-
     return (
-        <div style={styles.formGroup}>
-            <label style={styles.label}>Raw Configuration (JSON)</label>
+        <div className="formGroup">
+            <label className="label">Rule Configuration (JSON)</label>
             <textarea
-                style={{...styles.input, height: '80px', fontFamily: 'monospace'}}
+                className="input"
+                style={{height: '60px', fontFamily: 'monospace'}}
                 value={JSON.stringify(draft.config)}
                 onChange={e => {
                     try { setDraft({...draft, config: JSON.parse(e.target.value)}) }
-                    catch(err) { /* ignore invalid json while typing */ }
+                    catch(err) { /* sync issues */ }
                 }}
             />
-            <div style={styles.helper}>No specific UI for this rule yet. Edit raw JSON above.</div>
         </div>
     );
   };
 
-  // --- Helpers ---
-  const activeType = types.find(t => t.id == draft?.constraint_type_id);
-  const scopeOptions = ["GLOBAL", "LECTURER", "GROUP", "MODULE", "ROOM"];
   const targetOptions = draft ? (targets[draft.scope] || []) : [];
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <h2 style={styles.title}>Scheduler Rules & Constraints</h2>
-        <button style={styles.btn} onClick={openAdd}>+ Add Rule</button>
+    <div className="container">
+      <div className="header">
+        <h2 className="title">Scheduler Rules & Constraints</h2>
+        <button className="btn" onClick={openAdd}>+ Add Rule</button>
       </div>
 
-      {constraints.length === 0 && <p>No rules defined yet. Click "+ Add Rule" to create one.</p>}
-
-      <table style={styles.table}>
-        <thead style={styles.thead}>
+      <table className="table">
+        <thead className="thead">
           <tr>
-            <th style={styles.th}>Rule Type</th>
-            <th style={styles.th}>Applies To</th>
-            <th style={styles.th}>Details</th>
-            <th style={styles.th}>Priority</th>
-            <th style={styles.th}>Action</th>
+            <th className="th">Constraint Name</th>
+            <th className="th">Scope/Target</th>
+            <th className="th">Validity</th>
+            <th className="th">Active</th>
+            <th className="th">Priority</th>
+            <th className="th">Action</th>
           </tr>
         </thead>
         <tbody>
           {constraints.map(c => {
-            const typeName = types.find(t => t.id === c.constraint_type_id)?.code || "Unknown Rule";
+            const typeCode = types.find(t => t.id === c.constraint_type_id)?.code || "N/A";
             const targetName = (targets[c.scope] || []).find(t => t.id === c.target_id)?.name || "All";
-
-            let details = Object.entries(c.config).map(([k, v]) => `${k}: ${v}`).join(", ");
-            if (!details) details = "-";
 
             return (
               <tr key={c.id}>
-                <td style={styles.td}><strong>{typeName}</strong></td>
-                <td style={styles.td}>{c.scope}: {targetName}</td>
-                <td style={styles.td}>{details}</td>
-                <td style={styles.td}>
+                <td className="td">
+                    <strong>{c.name || "Unnamed"}</strong><br/>
+                    <small style={{color: '#666'}}>{typeCode}</small>
+                </td>
+                <td className="td">{c.scope}: {targetName}</td>
+                <td className="td" style={{fontSize: '0.8rem'}}>
+                    {c.valid_from} to <br/> {c.valid_to}
+                </td>
+                <td className="td">
+                    <span style={{color: c.active ? 'green' : 'red', fontWeight: 'bold'}}>
+                        {c.active ? "● True" : "○ False"}
+                    </span>
+                </td>
+                <td className="td">
                     <span style={{
-                        padding:'4px 8px', borderRadius:'4px', fontSize:'0.8rem', fontWeight:'bold',
+                        padding:'4px 8px', borderRadius:'4px', fontSize:'0.75rem', fontWeight:'bold',
                         background: c.hardness === "HARD" ? "#f8d7da" : "#d1e7dd",
                         color: c.hardness === "HARD" ? "#721c24" : "#0f5132"
                     }}>
                         {c.hardness}
                     </span>
                 </td>
-                <td style={styles.td}>
-                  <button style={styles.editBtn} onClick={() => openEdit(c)}>Edit</button>
-                  <button style={styles.deleteBtn} onClick={() => remove(c.id)}>Delete</button>
+                <td className="td">
+                  <button className="editBtn" onClick={() => openEdit(c)}>Edit</button>
+                  <button className="deleteBtn" onClick={() => remove(c.id)}>Delete</button>
                 </td>
               </tr>
             );
@@ -224,55 +190,87 @@ export default function ConstraintOverview() {
       </table>
 
       {modalOpen && (
-        <div style={styles.modalOverlay}>
-          <div style={styles.modalContent}>
-            <h3 style={{marginTop:0}}>{editingId ? "Edit Constraint" : "Add Constraint"}</h3>
+        <div className="modalOverlay">
+          <div className="modalContent">
+            <h3 style={{marginTop:0}}>{editingId ? "Edit Constraint" : "Create Constraint"}</h3>
 
-            {/* 1. Rule Type */}
-            <div style={styles.formGroup}>
-                <label style={styles.label}>Rule Type</label>
-                <select style={styles.input} value={draft.constraint_type_id} onChange={e => setDraft({...draft, constraint_type_id: e.target.value, config: {}})}>
-                    {types.map(t => <option key={t.id} value={t.id}>{t.code}</option>)}
-                </select>
-                <div style={styles.helper}>{types.find(t=>t.id == draft.constraint_type_id)?.description}</div>
+            <div className="formGroup">
+                <label className="label">Constraint Name</label>
+                <input 
+                    className="input" 
+                    value={draft.name} 
+                    onChange={e => setDraft({...draft, name: e.target.value})}
+                    placeholder="e.g., Mohammed NO Teaching on Fridays"
+                />
             </div>
 
-            {/* 2. Scope & Target */}
-            <div style={{display:'flex', gap:'15px', marginBottom:'20px'}}>
-                <div style={{flex:1}}>
-                    <label style={styles.label}>Applies To</label>
-                    <select style={styles.input} value={draft.scope} onChange={e => setDraft({...draft, scope: e.target.value, target_id: 0})}>
-                        {scopeOptions.map(s => <option key={s} value={s}>{s}</option>)}
+            <div style={{display:'flex', gap:'15px'}}>
+                <div className="formGroup" style={{flex:1}}>
+                    <label className="label">Valid From (Date)</label>
+                    <input type="date" className="input" value={draft.valid_from} onChange={e => setDraft({...draft, valid_from: e.target.value})} />
+                </div>
+                <div className="formGroup" style={{flex:1}}>
+                    <label className="label">Valid To (Date)</label>
+                    <input type="date" className="input" value={draft.valid_to} onChange={e => setDraft({...draft, valid_to: e.target.value})} />
+                </div>
+            </div>
+
+            <div style={{display:'flex', gap:'15px'}}>
+                <div className="formGroup" style={{flex:1}}>
+                    <label className="label">Constraint Level</label>
+                    <select className="input" value={draft.scope} onChange={e => setDraft({...draft, scope: e.target.value, target_id: 0})}>
+                        {["GLOBAL", "LECTURER", "GROUP", "MODULE", "ROOM"].map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
                 </div>
-                <div style={{flex:1}}>
-                    <label style={styles.label}>Target</label>
-                    <select style={styles.input} value={draft.target_id} onChange={e => setDraft({...draft, target_id: e.target.value})}>
-                        <option value={0}>-- Select --</option>
+                <div className="formGroup" style={{flex:1}}>
+                    <label className="label">Constraint Target</label>
+                    <select className="input" value={draft.target_id} onChange={e => setDraft({...draft, target_id: e.target.value})}>
+                        <option value={0}>-- Select Target --</option>
                         {targetOptions.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                     </select>
                 </div>
             </div>
 
-            {/* 3. Smart Parameters */}
-            <div style={{background: "#f9f9f9", padding: "15px", borderRadius: "8px", marginBottom: "20px", border: "1px solid #eee"}}>
-                <h4 style={{marginTop: 0, marginBottom: "15px", fontSize: "0.9rem", color: "#555"}}>Rule Parameters</h4>
-                {renderParameters()}
+            <div className="formGroup">
+                <label className="label">Constraint Rule (Logic Description)</label>
+                <textarea 
+                    className="input" 
+                    style={{height: '50px'}}
+                    value={draft.constraint_rule} 
+                    onChange={e => setDraft({...draft, constraint_rule: e.target.value})}
+                    placeholder="e.g., Mohammed is not available on Fridays for lectures"
+                />
             </div>
 
-            {/* 4. Hardness */}
-            <div style={styles.formGroup}>
-                <label style={styles.label}>Priority</label>
-                <select style={styles.input} value={draft.hardness} onChange={e => setDraft({...draft, hardness: e.target.value})}>
-                    <option value="HARD">HARD (Must happen)</option>
-                    <option value="SOFT">SOFT (Preference)</option>
+            <div style={{background: "#f9f9f9", padding: "15px", borderRadius: "8px", marginBottom: "20px", border: "1px solid #eee"}}>
+                <label className="label">Constraint Format & Type</label>
+                <select className="input" value={draft.constraint_type_id} onChange={e => setDraft({...draft, constraint_type_id: e.target.value, config: {}})}>
+                    {types.map(t => <option key={t.id} value={t.id}>{t.code}</option>)}
                 </select>
+                <div style={{marginTop: '10px'}}>{renderParameters()}</div>
+            </div>
+
+            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
+                <div className="formGroup" style={{marginBottom: 0}}>
+                    <label className="label">Priority (Hardness)</label>
+                    <select className="input" value={draft.hardness} onChange={e => setDraft({...draft, hardness: e.target.value})}>
+                        <option value="HARD">HARD (Must)</option>
+                        <option value="SOFT">SOFT (Prefer)</option>
+                    </select>
+                </div>
+                <div className="formGroup" style={{marginBottom: 0}}>
+                    <label className="label">Active Status (Boolean)</label>
+                    <label style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
+                        <input type="checkbox" checked={draft.active} onChange={e => setDraft({...draft, active: e.target.checked})} />
+                        {draft.active ? "Active" : "Inactive"}
+                    </label>
+                </div>
             </div>
 
             <div style={{display:'flex', justifyContent:'flex-end', gap:'10px'}}>
-                <button style={{...styles.btn, background:'#f8f9fa', border:'1px solid #ddd', color:'#333'}} onClick={() => setModalOpen(false)}>Cancel</button>
-                <button style={styles.btn} onClick={save}>
-                    {editingId ? "Save Changes" : "Create Rule"}
+                <button className="btn" style={{background:'#f8f9fa', border:'1px solid #ddd', color:'#333'}} onClick={() => setModalOpen(false)}>Cancel</button>
+                <button className="btn" onClick={save}>
+                    {editingId ? "Update Constraint" : "Create Constraint"}
                 </button>
             </div>
           </div>

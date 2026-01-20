@@ -1,6 +1,7 @@
-// src/api.js
+import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL; 
+const API_URL = API_BASE_URL;
 
 async function request(path, options = {}) {
   const res = await fetch(`${API_BASE_URL}${path}`, {
@@ -10,6 +11,8 @@ async function request(path, options = {}) {
     },
     ...options,
   });
+  return res.json();
+}
 
 const api = {
   // --- Study Programs ---
