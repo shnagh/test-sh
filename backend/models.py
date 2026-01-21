@@ -112,7 +112,10 @@ class Room(Base):
     name = Column(String, unique=True, index=True, nullable=False)
     capacity = Column(Integer, nullable=False)
     type = Column(String, nullable=False)  #  Lecture, Lab, Seminar
-    available = Column(Boolean, default=True, nullable=False)
+    status = Column(Boolean, nullable=True)
+    equipment = Column(String, nullable=True)
+    location = Column(String, nullable=True)
+
 
 
 class SchedulerConstraint(Base):
@@ -128,3 +131,11 @@ class SchedulerConstraint(Base):
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, nullable=False, server_default=func.now())
     updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String(200), unique=True, index=True, nullable=False)
+    password_hash = Column(String(255), nullable=False)
+    role = Column(String(20), nullable=False, default="student")  # student / lecturer / admin
