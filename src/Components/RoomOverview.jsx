@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import api from "../api";
+import api from "./api";
 
 // --- STYLES ---
 const styles = {
@@ -135,7 +135,7 @@ export default function RoomOverview() {
   const [formMode, setFormMode] = useState("overview");
   const [editingId, setEditingId] = useState(null);
 
-  // Define the  locations here
+  // Define the locations here
   const campuses = ["Berlin", "Dusseldorf", "Munich"];
 
   const [draft, setDraft] = useState({
@@ -169,7 +169,7 @@ export default function RoomOverview() {
       capacity: "",
       type: "Lecture Classroom",
       available: true,
-      campus: selectedCampus 
+      campus: selectedCampus // Locked to current selection
     });
     setFormMode("add");
   }
