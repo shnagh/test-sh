@@ -23,6 +23,7 @@ const styles = {
   listContainer: { display: "flex", flexDirection: "column", gap: "12px" },
 
   // Updated Grid: Code | Name | Program | Semester | Category | ECTS | Assessment | Room Type | Actions
+  // Note: 1.5fr for Name/Program gives them space, fixed pixels for smaller metadata
   listHeader: {
     display: "grid",
     gridTemplateColumns: "80px 2fr 1.5fr 80px 100px 60px 1.2fr 1.2fr 110px",
@@ -32,7 +33,8 @@ const styles = {
     fontSize: "0.75rem",
     fontWeight: "700",
     textTransform: "uppercase",
-    letterSpacing: "0.05em"
+    letterSpacing: "0.05em",
+    alignItems: "center" // Vertical center
   },
 
   listCard: {
@@ -42,23 +44,28 @@ const styles = {
     cursor: "pointer",
     transition: "background-color 0.2s ease",
     display: "grid",
-    gridTemplateColumns: "80px 2fr 1.5fr 80px 100px 60px 1.2fr 1.2fr 110px", // Matches Header
-    alignItems: "center",
+    gridTemplateColumns: "80px 2fr 1.5fr 80px 100px 60px 1.2fr 1.2fr 110px", // Matches Header Exactly
+    alignItems: "center", // Vertical center
     padding: "16px 25px",
-    gap: "15px",
+    gap: "0", // Gap handled by grid layout spacing
     boxShadow: "0 2px 8px rgba(0,0,0,0.08)"
   },
 
   listCardHover: { backgroundColor: "#f1f5f9" },
 
-  // Typography
+  // Typography & Cell Styling
   codeText: { fontWeight: "700", color: "#3b82f6", fontSize: "0.95rem" },
-  nameText: { fontWeight: "600", color: "#1e293b", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
-  programLink: { color: "#475569", cursor: "pointer", textDecoration: "underline", fontSize: "0.85rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
-  cellText: { fontSize: "0.9rem", color: "#64748b", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
+  nameText: { fontWeight: "600", color: "#1e293b", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", paddingRight: "10px" },
+  programLink: { color: "#475569", cursor: "pointer", textDecoration: "underline", fontSize: "0.85rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", paddingRight: "10px" },
+
+  // Centered Cells
+  centeredCell: { textAlign: "center", fontSize: "0.9rem", color: "#64748b" },
+
+  // Standard Text Cells
+  cellText: { fontSize: "0.9rem", color: "#64748b", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", paddingRight: "10px" },
 
   // Category Badges
-  catBadge: { padding: "4px 8px", borderRadius: "6px", fontSize: "0.75rem", fontWeight: "bold", textAlign: "center", textTransform: "uppercase" },
+  catBadge: { padding: "4px 8px", borderRadius: "6px", fontSize: "0.75rem", fontWeight: "bold", textAlign: "center", textTransform: "uppercase", display: "inline-block" },
   catCore: { background: "#dbeafe", color: "#1e40af" },
   catElective: { background: "#fef3c7", color: "#92400e" },
   catShared: { background: "#f3e8ff", color: "#6b21a8" },
@@ -97,13 +104,17 @@ export default function ModuleOverview({ onNavigate }) {
   const [hoverId, setHoverId] = useState(null);
 
   // Form State
-  const [formMode, setFormMode] = useState("overview"); // 'overview' | 'add' | 'edit'
+  const [formMode, setFormMode] = useState("overview");
   const [editingCode, setEditingCode] = useState(null);
   const [selectedSpecToAdd, setSelectedSpecToAdd] = useState("");
   const [draft, setDraft] = useState({
     module_code: "", name: "", ects: 5, room_type: "Lecture Classroom", semester: 1,
     assessment_type: "Written Exam", category: "Core", program_id: "", specialization_ids: []
   });
+
+  // Delete State
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [moduleToDelete, setModuleToDelete] = useState(null);
 
   useEffect(() => { loadData(); }, []);
 
@@ -174,9 +185,21 @@ export default function ModuleOverview({ onNavigate }) {
     } catch (e) { alert("Error saving module."); }
   };
 
-  const remove = async (code) => {
-    if (!window.confirm(`Delete module ${code}?`)) return;
-    try { await api.deleteModule(code); loadData(); } catch (e) { alert("Error deleting."); }
+  // Trigger Delete Modal
+  const initiateDelete = (m) => {
+    setModuleToDelete(m);
+    setShowDeleteModal(true);
+  };
+
+  // Actual API Call
+  const confirmDelete = async () => {
+    if (!moduleToDelete) return;
+    try {
+        await api.deleteModule(moduleToDelete.module_code);
+        setShowDeleteModal(false);
+        setModuleToDelete(null);
+        loadData();
+    } catch (e) { alert("Error deleting module."); }
   };
 
   const linkSpecToDraft = () => {
@@ -198,7 +221,6 @@ export default function ModuleOverview({ onNavigate }) {
       }
   };
 
-  // Helper for Category Color
   const getCategoryStyle = (cat) => {
       if (cat === "Core") return styles.catCore;
       if (cat === "Elective") return styles.catElective;
@@ -213,14 +235,14 @@ export default function ModuleOverview({ onNavigate }) {
         <button style={{...styles.btn, ...styles.primaryBtn}} onClick={openAdd}>+ New Module</button>
       </div>
 
-      {/* Header Row */}
+      {/* Header Row (Center alignment for Sem, Cat, ECTS) */}
       <div style={styles.listHeader}>
         <div>Code</div>
         <div>Module Name</div>
         <div>Program</div>
-        <div>Semester</div>
-        <div>Category</div>
-        <div>ECTS</div>
+        <div style={{textAlign: "center"}}>Semester</div>
+        <div style={{textAlign: "center"}}>Category</div>
+        <div style={{textAlign: "center"}}>ECTS</div>
         <div>Assessment</div>
         <div>Room Type</div>
         <div style={{textAlign: 'right'}}>Action</div>
@@ -240,7 +262,10 @@ export default function ModuleOverview({ onNavigate }) {
                     onMouseEnter={() => setHoverId(m.module_code)}
                     onMouseLeave={() => setHoverId(null)}
                 >
+                    {/* Code */}
                     <div style={styles.codeText}>{m.module_code}</div>
+
+                    {/* Name */}
                     <div style={styles.nameText}>{m.name}</div>
 
                     {/* Program Link */}
@@ -257,22 +282,27 @@ export default function ModuleOverview({ onNavigate }) {
                         )}
                     </div>
 
-                    <div style={styles.cellText}>{m.semester}</div>
+                    {/* Semester (Centered) */}
+                    <div style={styles.centeredCell}>{m.semester}</div>
 
-                    {/* Category Tag */}
-                    <div>
+                    {/* Category Tag (Centered) */}
+                    <div style={{textAlign: "center"}}>
                         <span style={{...styles.catBadge, ...getCategoryStyle(m.category)}}>{m.category}</span>
                     </div>
 
-                    <div style={{fontWeight:'bold', fontSize:'0.9rem', color:'#475569'}}>{m.ects}</div>
+                    {/* ECTS (Centered) */}
+                    <div style={{...styles.centeredCell, fontWeight:'bold', color:'#475569'}}>{m.ects}</div>
 
+                    {/* Assessment */}
                     <div style={styles.cellText}>{m.assessment_type || "-"}</div>
+
+                    {/* Room Type */}
                     <div style={styles.cellText}>{m.room_type}</div>
 
                     {/* Actions */}
                     <div style={styles.actionContainer}>
                         <button style={{...styles.actionBtn, ...styles.editBtn}} onClick={() => openEdit(m)}>Edit</button>
-                        <button style={{...styles.actionBtn, ...styles.deleteBtn}} onClick={() => remove(m.module_code)}>Del</button>
+                        <button style={{...styles.actionBtn, ...styles.deleteBtn}} onClick={() => initiateDelete(m)}>Del</button>
                     </div>
                 </div>
                 );
@@ -281,7 +311,7 @@ export default function ModuleOverview({ onNavigate }) {
         {!loading && filteredModules.length === 0 && <div style={{ color: "#94a3b8", padding: "40px", textAlign: "center", fontStyle: "italic" }}>No modules found.</div>}
       </div>
 
-      {/* MODAL */}
+      {/* EDIT / ADD MODAL */}
       {(formMode === "add" || formMode === "edit") && (
         <div style={styles.overlay}>
             <div style={styles.modal}>
@@ -331,7 +361,6 @@ export default function ModuleOverview({ onNavigate }) {
                             if (!spec) return null;
                             return (
                                 <div key={spec.id} style={{background:'white', border:'1px solid #ddd', padding:'4px 10px', borderRadius:'15px', fontSize:'0.85rem', display:'flex', alignItems:'center', gap:'8px'}}>
-                                    {/* ✅ FIX: Name first, Acronym in parens */}
                                     <span>{spec.name} ({spec.acronym})</span>
                                     <button onClick={() => unlinkSpecFromDraft(spec.id)} style={{border:'none', background:'transparent', color:'#ef4444', cursor:'pointer', fontWeight:'bold'}}>×</button>
                                 </div>
@@ -348,6 +377,56 @@ export default function ModuleOverview({ onNavigate }) {
             </div>
         </div>
       )}
+
+      {/* DELETE MODAL */}
+      {showDeleteModal && (
+        <DeleteConfirmationModal
+            moduleName={moduleToDelete?.name}
+            onClose={() => setShowDeleteModal(false)}
+            onConfirm={confirmDelete}
+        />
+      )}
     </div>
   );
+}
+
+// --- HELPER: Delete Confirmation Modal (Consistent with ProgramOverview) ---
+function DeleteConfirmationModal({ moduleName, onClose, onConfirm }) {
+    const [input, setInput] = useState("");
+    const isMatch = input === "DELETE";
+
+    return (
+        <div style={styles.overlay}>
+            <div style={styles.modal}>
+                <h3 style={{ marginTop: 0, color: "#991b1b" }}>⚠️ Delete Module?</h3>
+                <p style={{ color: "#4b5563", marginBottom: "20px" }}>
+                    Are you sure you want to delete <strong>{moduleName}</strong>? This action cannot be undone.
+                </p>
+                <p style={{ fontSize: "0.9rem", fontWeight: "bold", marginBottom: "5px" }}>
+                    Type "DELETE" to confirm:
+                </p>
+                <input
+                    style={styles.input}
+                    value={input}
+                    onChange={e => setInput(e.target.value)}
+                    placeholder="DELETE"
+                />
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+                    <button style={{ ...styles.btn, background: "#e5e7eb", color: "#374151" }} onClick={onClose}>Cancel</button>
+                    <button
+                        disabled={!isMatch}
+                        style={{
+                            ...styles.btn,
+                            background: isMatch ? "#dc2626" : "#fca5a5",
+                            color: "white",
+                            cursor: isMatch ? "pointer" : "not-allowed"
+                        }}
+                        onClick={onConfirm}
+                    >
+                        Permanently Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
 }
