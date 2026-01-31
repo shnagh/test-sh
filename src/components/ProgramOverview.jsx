@@ -83,10 +83,9 @@ export default function ProgramOverview({ initialData, clearInitialData, current
   const [specializations, setSpecializations] = useState([]);
   const [modules, setModules] = useState([]);
 
-  // ✅ PERMISSION LOGIC:
-  // Admin, PM, and HoSP can edit.
-  // Lecturers and Students are Read-Only (for now).
-  const canEdit = ["Admin", "PM", "HoSP"].includes(currentUserRole);
+  // ✅ PERMISSION LOGIC (Fixing Case Sensitivity mismatch with Backend):
+  const role = currentUserRole?.toLowerCase();
+  const canEdit = ["admin", "pm", "hosp"].includes(role);
 
   const refreshNestedData = useCallback((progId) => {
     api.getSpecializations().then(res => setSpecializations((res || []).filter(s => s.program_id === progId)));
@@ -163,7 +162,7 @@ function ProgramList({ programs, lecturers, onSelect, refresh, canEdit }) {
   const [hoverId, setHoverId] = useState(null);
 
   const [newProg, setNewProg] = useState({
-      name: "", acronym: "", head_of_program: "", degree_type: "B.Sc.",
+      name: "", acronym: "", head_of_program_id: null, degree_type: "B.Sc.",
       total_ects: 180, level: "Bachelor", status: true,
       start_date: "", location: ""
   });
@@ -207,7 +206,6 @@ function ProgramList({ programs, lecturers, onSelect, refresh, canEdit }) {
                 onChange={e => setSearchQuery(e.target.value)}
             />
         </div>
-        {/* ✅ HIDE BUTTON IF NO PERMISSION */}
         {canEdit && (
             <button style={{ ...styles.btn, ...styles.primaryBtn }} onClick={() => setShowCreate(true)}>+ New Program</button>
         )}
@@ -249,8 +247,12 @@ function ProgramList({ programs, lecturers, onSelect, refresh, canEdit }) {
                         <span style={styles.progSubtitle}>{p.acronym}</span>
                     </div>
                     <div style={styles.cellText}>{p.location || "-"}</div>
-                    {/* ✅ DISPLAY COMPUTED NAME (or fallback to String) */}
-                    <div style={styles.cellText}>{p.head_of_program || "-"}</div>
+                    {/* ✅ DISPLAY COMPUTED NAME (Uses nested head_lecturer object): */}
+                    <div style={styles.cellText}>
+                        {p.head_lecturer
+                            ? `${p.head_lecturer.title} ${p.head_lecturer.last_name}`
+                            : "-"}
+                    </div>
                     <div style={styles.cellText}>{formatDate(p.start_date)}</div>
                     <div style={styles.ectsBadge}>{p.total_ects} ECTS</div>
                 </div>
@@ -290,9 +292,14 @@ function ProgramList({ programs, lecturers, onSelect, refresh, canEdit }) {
                     <input type="date" style={styles.input} value={newProg.start_date} onChange={e => setNewProg({...newProg, start_date: e.target.value})} />
                     <input style={styles.input} placeholder="Location (e.g. Berlin)" value={newProg.location} onChange={e => setNewProg({...newProg, location: e.target.value})} />
                 </div>
-                <select style={styles.select} value={newProg.head_of_program} onChange={e => setNewProg({...newProg, head_of_program: e.target.value})}>
+                {/* ✅ Link via ID as per new Schema */}
+                <select
+                    style={styles.select}
+                    value={newProg.head_of_program_id || ""}
+                    onChange={e => setNewProg({...newProg, head_of_program_id: e.target.value ? parseInt(e.target.value) : null})}
+                >
                     <option value="">-- Select Head --</option>
-                    {lecturers.map(l => <option key={l.id} value={`${l.first_name} ${l.last_name}`}>{l.first_name} {l.last_name}</option>)}
+                    {lecturers.map(l => <option key={l.id} value={l.id}>{l.title} {l.first_name} {l.last_name}</option>)}
                 </select>
                 <div style={{display:'flex', gap:'10px', alignItems:'center', marginBottom:'15px'}}>
                     <input type="number" style={{...styles.input, marginBottom:0}} placeholder="ECTS" value={newProg.total_ects} onChange={e => setNewProg({...newProg, total_ects: e.target.value})} />
@@ -351,7 +358,6 @@ function ProgramWorkspace({ program, lecturers, specializations, modules, onBack
       return relevantSpecs.map(s => s.acronym).join(", ");
   };
 
-  // --- MODULE ACTIONS ---
   const openModuleAdd = () => {
       setModuleEditingCode(null);
       setSelectedSpecToAdd("");
@@ -426,7 +432,6 @@ function ProgramWorkspace({ program, lecturers, specializations, modules, onBack
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
         <button style={{ ...styles.btn, background:"transparent", color:"#64748b", padding:0 }} onClick={onBack}>← Back to List</button>
-        {/* ✅ HIDE DELETE BUTTON */}
         {canEdit && (
             <button style={{ ...styles.btn, ...styles.dangerBtn }} onClick={() => setShowDeleteModal(true)}>Delete Program</button>
         )}
@@ -455,7 +460,6 @@ function ProgramWorkspace({ program, lecturers, specializations, modules, onBack
           <div>
              <div style={{display:'flex', justifyContent:'space-between', marginBottom:'20px'}}>
                 <h3>Program Details</h3>
-                {/* ✅ HIDE EDIT TOGGLE */}
                 {canEdit && (
                     !isEditing
                         ? <button style={{...styles.btn, ...styles.secondaryBtn}} onClick={() => setIsEditing(true)}>Edit Details</button>
@@ -488,10 +492,21 @@ function ProgramWorkspace({ program, lecturers, specializations, modules, onBack
                 <div>
                     <label style={{ display: "block", color: "#64748b", fontSize: "0.85rem", marginBottom: "5px" }}>Head of Program</label>
                     {isEditing ? (
-                        <select style={styles.select} value={editDraft.head_of_program} onChange={e => setEditDraft({...editDraft, head_of_program: e.target.value})}>
-                             {lecturers.map(l => <option key={l.id} value={`${l.first_name} ${l.last_name}`}>{l.first_name} {l.last_name}</option>)}
+                        <select
+                            style={styles.select}
+                            value={editDraft.head_of_program_id || ""}
+                            onChange={e => setEditDraft({...editDraft, head_of_program_id: e.target.value ? parseInt(e.target.value) : null})}
+                        >
+                             <option value="">-- Select Head --</option>
+                             {lecturers.map(l => <option key={l.id} value={l.id}>{l.title} {l.first_name} {l.last_name}</option>)}
                         </select>
-                    ) : <div style={{ fontWeight: "500" }}>{program.head_of_program}</div>}
+                    ) : (
+                        <div style={{ fontWeight: "500" }}>
+                            {program.head_lecturer
+                                ? `${program.head_lecturer.title} ${program.head_lecturer.last_name}`
+                                : "-"}
+                        </div>
+                    )}
                 </div>
                 <FieldDisplay label="Total ECTS" type="number" isEditing={isEditing} value={editDraft.total_ects} onChange={v => setEditDraft({...editDraft, total_ects: v})} />
                 <FieldDisplay label="Start Date" type="date" isEditing={isEditing} value={editDraft.start_date} onChange={v => setEditDraft({...editDraft, start_date: v})} />
@@ -560,7 +575,6 @@ function ProgramWorkspace({ program, lecturers, specializations, modules, onBack
                             </span>
                         </div>
 
-                        {/* ✅ PERMISSION CHECK ON MODULE ACTIONS */}
                         <div style={styles.actionContainer}>
                             {canEdit ? (
                                 <>

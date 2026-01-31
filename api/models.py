@@ -1,8 +1,16 @@
-from sqlalchemy import Column, Integer, String, Boolean, Date, ForeignKey, Text, CheckConstraint, JSON, TIMESTAMP
+from sqlalchemy import Column, Integer, String, Boolean, Date, ForeignKey, Text, JSON, TIMESTAMP, Table
 from sqlalchemy.orm import relationship, declarative_base
 from sqlalchemy.sql import func
 
 Base = declarative_base()
+
+# Association Table for Many-to-Many relationship between Modules and Specializations
+module_specializations = Table(
+    "module_specializations",
+    Base.metadata,
+    Column("module_code", String, ForeignKey("modules.module_code", ondelete="CASCADE"), primary_key=True),
+    Column("specialization_id", Integer, ForeignKey("specializations.id", ondelete="CASCADE"), primary_key=True),
+)
 
 
 class User(Base):
@@ -35,7 +43,7 @@ class StudyProgram(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True, nullable=False)
     acronym = Column(String, nullable=False)
-    # head_of_program column REMOVED (Data Normalization)
+    # ✅ FIX: 'head_of_program' string column removed to prevent "Unknown" errors
     status = Column(Boolean, default=True)
     start_date = Column(String, nullable=False)
     total_ects = Column(Integer, nullable=False)
@@ -43,9 +51,10 @@ class StudyProgram(Base):
     level = Column(String(50), default="Bachelor")
     degree_type = Column(String, nullable=True)
 
+    # Correct ID-based link for permission logic
     head_of_program_id = Column(Integer, ForeignKey("lecturers.ID"), nullable=True)
 
-    # Relationship to fetch the name dynamically
+    # This relationship allows the API to fetch the Lecturer object for the Frontend
     head_lecturer = relationship("Lecturer")
 
 
@@ -54,32 +63,26 @@ class Module(Base):
     module_code = Column(String, primary_key=True, index=True)
     name = Column(String, nullable=False)
     ects = Column(Integer, nullable=False)
-    room_type = Column(String, nullable=False)  # seminar_room, lecture_hall, computer_lab
+    room_type = Column(String, nullable=False)
     assessment_type = Column(String, nullable=True)
     semester = Column(Integer, nullable=False)
     category = Column(String, nullable=True)
     program_id = Column(Integer, ForeignKey("study_programs.id"), nullable=True)
 
-    specializations = relationship("Specialization", secondary="module_specializations", back_populates="modules")
+    specializations = relationship("Specialization", secondary=module_specializations, back_populates="modules")
 
 
 class Specialization(Base):
     __tablename__ = "specializations"
     id = Column(Integer, primary_key=True, index=True)
-    program_id = Column(Integer, ForeignKey("study_programs.id"))  # Parent Program
+    program_id = Column(Integer, ForeignKey("study_programs.id"))
     name = Column(String, nullable=False)
     acronym = Column(String, nullable=False)
     start_date = Column(String, nullable=False)
     status = Column(Boolean, default=True)
-    study_program = Column(String, nullable=True)  # Redundant name copy, can be kept or removed
+    study_program = Column(String, nullable=True)
 
-    modules = relationship("Module", secondary="module_specializations", back_populates="specializations")
-
-
-class ModuleSpecialization(Base):
-    __tablename__ = "module_specializations"
-    module_code = Column(String, ForeignKey("modules.module_code", ondelete="CASCADE"), primary_key=True)
-    specialization_id = Column(Integer, ForeignKey("specializations.id", ondelete="CASCADE"), primary_key=True)
+    modules = relationship("Module", secondary=module_specializations, back_populates="specializations")
 
 
 class Group(Base):
@@ -108,7 +111,7 @@ class LecturerAvailability(Base):
     __tablename__ = "lecturer_availabilities"
     id = Column(Integer, primary_key=True, index=True)
     lecturer_id = Column(Integer, ForeignKey("lecturers.ID", ondelete="CASCADE"), unique=True, nullable=False)
-    schedule_data = Column(JSON, default={}, nullable=False)  # Stores the grid (days/slots)
+    schedule_data = Column(JSON, default={}, nullable=False)
 
 
 class ConstraintType(Base):
@@ -116,8 +119,8 @@ class ConstraintType(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(80), unique=True, nullable=False)
     active = Column(Boolean, default=True, nullable=False)
-    constraint_level = Column(String)
-    constraint_format = Column(String)
+    constraint_level = Column(String, nullable=True)
+    constraint_format = Column(String, nullable=True)
     valid_from = Column(Date, nullable=True)
     valid_to = Column(Date, nullable=True)
     constraint_rule = Column(Text, nullable=True)
@@ -128,9 +131,9 @@ class SchedulerConstraint(Base):
     __tablename__ = "scheduler_constraints"
     id = Column(Integer, primary_key=True, index=True)
     constraint_type_id = Column(Integer, ForeignKey("constraint_types.id"), nullable=False)
-    hardness = Column(String(10), nullable=False)  # soft / hard
+    hardness = Column(String(10), nullable=False)
     weight = Column(Integer, nullable=True)
-    scope = Column(String(20), nullable=False)  # global, program, lecturer, etc.
+    scope = Column(String(20), nullable=False)
     target_id = Column(Integer, nullable=True)
     config = Column(JSON, default={}, nullable=False)
     is_enabled = Column(Boolean, default=True, nullable=False)
