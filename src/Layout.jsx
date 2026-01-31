@@ -31,13 +31,13 @@ const Layout = ({ activeTab, setActiveTab, children }) => {
           <div className="nav-section-title">People & Groups</div>
           <NavLink id="lecturers" icon="" label="Lecturers" />
           <NavLink id="groups" icon="" label="Student Groups" />
-          <NavLink id="availabilities" icon="" label="Availability" />
 
           <div className="nav-section-title">Facilities</div>
           <NavLink id="rooms" icon="" label="Rooms" />
 
           <div className="nav-section-title">Planning Logic</div>
           <NavLink id="constraints" icon="" label="Constraints & Rules" />
+          <NavLink id="availabilities" icon="" label="Availability" />
         </div>
 
         <div className="sidebar-footer">
