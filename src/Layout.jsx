@@ -19,25 +19,25 @@ const Layout = ({ activeTab, setActiveTab, children }) => {
       {/* --- LEFT SIDEBAR --- */}
       <aside className="sidebar">
         <div className="sidebar-header">
-          🎓 UniScheduler
+          ICSS Scheduler
         </div>
 
         <div className="sidebar-nav">
 
-          <div className="nav-section-title">Academic Structure</div>
-          <NavLink id="programs" icon="🎓" label="Study Programs" />
-          <NavLink id="modules" icon="📚" label="Modules" />
+          <div className="nav-section-title">Curriculum</div>
+          <NavLink id="programs" icon="" label="Study Programs" />
+          <NavLink id="modules" icon="" label="Modules" />
 
           <div className="nav-section-title">People & Groups</div>
-          <NavLink id="lecturers" icon="👨‍🏫" label="Lecturers" />
-          <NavLink id="groups" icon="👥" label="Student Groups" />
-          <NavLink id="availabilities" icon="🕒" label="Availability" />
+          <NavLink id="lecturers" icon="" label="Lecturers" />
+          <NavLink id="groups" icon="" label="Student Groups" />
+          <NavLink id="availabilities" icon="" label="Availability" />
 
           <div className="nav-section-title">Facilities</div>
-          <NavLink id="rooms" icon="🏢" label="Rooms" />
+          <NavLink id="rooms" icon="" label="Rooms" />
 
           <div className="nav-section-title">Planning Logic</div>
-          <NavLink id="constraints" icon="⚙️" label="Constraints & Rules" />
+          <NavLink id="constraints" icon="" label="Constraints & Rules" />
         </div>
 
         <div className="sidebar-footer">
