@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import "./App.css";
-import Layout from "./Layout"; // Same folder (src/)
+import Layout from "./Layout";
 
-// Import components from the components folder
+// Import components
 import ProgramOverview from "./components/ProgramOverview";
 import ModuleOverview from "./components/ModuleOverview";
 import LecturerOverview from "./components/LecturerOverview";
@@ -14,12 +14,20 @@ import AvailabilityOverview from "./components/AvailabilityOverview";
 function App() {
   const [activeTab, setActiveTab] = useState("programs");
 
+  // State to hold data when switching tabs (e.g., jumping to a specific program)
+  const [navData, setNavData] = useState(null);
+
+  const handleNavigate = (tab, data = null) => {
+    setActiveTab(tab);
+    setNavData(data);
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case "programs":
-        return <ProgramOverview />;
+        return <ProgramOverview initialData={navData} clearInitialData={() => setNavData(null)} />;
       case "modules":
-        return <ModuleOverview />;
+        return <ModuleOverview onNavigate={handleNavigate} />;
       case "lecturers":
         return <LecturerOverview />;
       case "rooms":
