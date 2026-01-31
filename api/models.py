@@ -12,25 +12,45 @@ module_specializations = Table(
 )
 
 
+# ✅ NEW: User Table
+class User(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, unique=True, nullable=False)
+    password_hash = Column(String, nullable=False)
+    role = Column(String, nullable=False)  # 'admin', 'pm', 'hosp', 'lecturer', 'student'
+
+    # Link to a Lecturer Profile
+    lecturer_id = Column(Integer, ForeignKey("lecturers.ID"), nullable=True)
+    lecturer_profile = relationship("Lecturer")
+
+
 class StudyProgram(Base):
     __tablename__ = "study_programs"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     acronym = Column(String, nullable=False)
-    head_of_program = Column(String, nullable=False)
-    # ✅ MATCHES SQL: "status" boolean
+
+    # ✅ CHANGED: Logic is now ID-based for security
+    head_of_program_id = Column(Integer, ForeignKey("lecturers.ID"), nullable=True)
+    head_of_program = Column(String, nullable=True)  # Kept for migration safety
+
     status = Column(Boolean, default=True)
     start_date = Column(String, nullable=False)
     total_ects = Column(Integer, nullable=False)
     location = Column(String, nullable=True)
     level = Column(String, nullable=False, server_default="Bachelor")
-    # ✅ NEW FIELD: Type of Degree
     degree_type = Column(String, nullable=True)
+
+    # Relationship to fetch the Name for the Frontend
+    head_lecturer = relationship("Lecturer")
 
     specializations = relationship("Specialization", back_populates="program", cascade="all, delete-orphan")
     modules = relationship("Module", back_populates="program")
 
 
+# ... [Keep your existing Specialization, Module, Lecturer, Group, Room, Constraint classes exactly as they are] ...
+# Paste the rest of your existing models.py here
 class Specialization(Base):
     __tablename__ = "specializations"
     id = Column(Integer, primary_key=True, index=True)

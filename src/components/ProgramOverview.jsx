@@ -8,16 +8,15 @@ const DEGREE_OPTIONS = {
 };
 
 const DEGREE_STYLES = {
-  "B.Sc.": { bg: "#e0f2fe", color: "#0369a1" }, // Sky Blue
+  "B.Sc.": { bg: "#e0f2fe", color: "#0369a1" },
   "M.Sc.": { bg: "#e0f2fe", color: "#0369a1" },
-  "B.A.": { bg: "#ffe4e6", color: "#be123c" },  // Rose
+  "B.A.": { bg: "#ffe4e6", color: "#be123c" },
   "M.A.": { bg: "#ffe4e6", color: "#be123c" },
-  "LL.B.": { bg: "#fef3c7", color: "#b45309" }, // Amber
+  "LL.B.": { bg: "#fef3c7", color: "#b45309" },
   "LL.M.": { bg: "#fef3c7", color: "#b45309" },
   "default": { bg: "#f1f5f9", color: "#64748b" }
 };
 
-// ✅ ADDED: Missing constants required for Module Form
 const STANDARD_ROOM_TYPES = ["Lecture Classroom", "Computer Lab", "Seminar"];
 const ASSESSMENT_TYPES = ["Written Exam", "Presentation", "Project", "Report"];
 const CATEGORY_TYPES = ["Core", "Shared", "Elective"];
@@ -25,105 +24,27 @@ const CATEGORY_TYPES = ["Core", "Shared", "Elective"];
 // --- STYLES ---
 const styles = {
   container: { padding: "20px", fontFamily: "'Inter', sans-serif", color: "#333", maxWidth: "1200px", margin: "0 auto" },
-
-  // Controls Header
   controlsBar: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", gap: "15px", flexWrap: "wrap" },
   leftControls: { display: "flex", gap: "15px", alignItems: "center", flex: 1 },
-
-  searchBar: {
-    padding: "10px 15px",
-    borderRadius: "8px",
-    border: "1px solid #cbd5e1",
-    fontSize: "0.95rem",
-    width: "100%",
-    maxWidth: "350px",
-    background: "white",
-    boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
-    outline: "none"
-  },
-
-  // Toggle
+  searchBar: { padding: "10px 15px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.95rem", width: "100%", maxWidth: "350px", background: "white", boxShadow: "0 1px 2px rgba(0,0,0,0.05)", outline: "none" },
   toggleContainer: { display: "flex", background: "#e2e8f0", padding: "4px", borderRadius: "8px" },
   toggleBtn: { padding: "6px 16px", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "0.9rem", fontWeight: "600", color: "#64748b", background: "transparent", transition: "all 0.2s" },
   toggleBtnActive: { background: "white", color: "#3b82f6", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" },
-
-  // --- MAIN LIST LAYOUT (PROGRAMS) ---
   listContainer: { display: "flex", flexDirection: "column", gap: "12px" },
-
-  // Added 70px column for Degree Type after Status
-  listHeader: {
-    display: "grid",
-    gridTemplateColumns: "90px 70px 2fr 1.2fr 1.5fr 1fr 80px",
-    gap: "15px",
-    padding: "0 25px",
-    marginBottom: "5px",
-    color: "#94a3b8",
-    fontSize: "0.75rem",
-    fontWeight: "700",
-    textTransform: "uppercase",
-    letterSpacing: "0.05em",
-    alignItems: "center"
-  },
-
-  listCard: {
-    background: "white",
-    borderRadius: "8px",
-    border: "none",
-    cursor: "pointer",
-    transition: "background-color 0.15s ease",
-    display: "grid",
-    gridTemplateColumns: "90px 70px 2fr 1.2fr 1.5fr 1fr 80px",
-    alignItems: "center",
-    padding: "18px 25px",
-    gap: "15px",
-    boxShadow: "0 2px 8px rgba(0,0,0,0.08)"
-  },
-
+  listHeader: { display: "grid", gridTemplateColumns: "90px 70px 2fr 1.2fr 1.5fr 1fr 80px", gap: "15px", padding: "0 25px", marginBottom: "5px", color: "#94a3b8", fontSize: "0.75rem", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.05em", alignItems: "center" },
+  listCard: { background: "white", borderRadius: "8px", border: "none", cursor: "pointer", transition: "background-color 0.15s ease", display: "grid", gridTemplateColumns: "90px 70px 2fr 1.2fr 1.5fr 1fr 80px", alignItems: "center", padding: "18px 25px", gap: "15px", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" },
   listCardHover: { backgroundColor: "#f1f5f9" },
-
-  // --- MODULE LIST LAYOUT ---
-  moduleHeader: {
-    display: "grid",
-    gridTemplateColumns: "80px 3fr 80px 100px 60px 1.2fr 1.2fr 1.5fr 130px",
-    gap: "15px",
-    padding: "10px 15px",
-    background: "#f8fafc",
-    borderBottom: "1px solid #e2e8f0",
-    color: "#94a3b8",
-    fontSize: "0.7rem",
-    fontWeight: "700",
-    textTransform: "uppercase",
-    letterSpacing: "0.05em",
-    alignItems: "center",
-    borderTopLeftRadius: "8px",
-    borderTopRightRadius: "8px"
-  },
-
-  moduleCard: {
-    background: "white",
-    borderBottom: "1px solid #f1f5f9",
-    display: "grid",
-    gridTemplateColumns: "80px 3fr 80px 100px 60px 1.2fr 1.2fr 1.5fr 130px",
-    alignItems: "center",
-    padding: "12px 15px",
-    gap: "15px",
-    fontSize: "0.9rem"
-  },
-
-  // Typography
+  moduleHeader: { display: "grid", gridTemplateColumns: "80px 3fr 80px 100px 60px 1.2fr 1.2fr 1.5fr 130px", gap: "15px", padding: "10px 15px", background: "#f8fafc", borderBottom: "1px solid #e2e8f0", color: "#94a3b8", fontSize: "0.7rem", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.05em", alignItems: "center", borderTopLeftRadius: "8px", borderTopRightRadius: "8px" },
+  moduleCard: { background: "white", borderBottom: "1px solid #f1f5f9", display: "grid", gridTemplateColumns: "80px 3fr 80px 100px 60px 1.2fr 1.2fr 1.5fr 130px", alignItems: "center", padding: "12px 15px", gap: "15px", fontSize: "0.9rem" },
   progTitle: { margin: 0, fontSize: "1rem", fontWeight: "600", color: "#1e293b", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
   progSubtitle: { margin: 0, fontSize: "0.85rem", color: "#64748b", fontWeight: "500" },
   codeText: { fontWeight: "700", color: "#3b82f6", fontSize: "0.9rem" },
   nameText: { fontWeight: "600", color: "#1e293b", lineHeight: "1.3" },
   cellText: { fontSize: "0.85rem", color: "#64748b", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
   centeredCell: { textAlign: "center", fontSize: "0.85rem", color: "#64748b" },
-
-  // Tabs
   tabContainer: { display: "flex", gap: "20px", marginBottom: "20px", borderBottom: "2px solid #e2e8f0" },
   tab: { padding: "12px 0", cursor: "pointer", fontSize: "1rem", color: "#64748b", fontWeight: "500", borderBottom: "2px solid transparent", marginBottom: "-2px" },
   activeTab: { color: "#3b82f6", borderBottom: "2px solid #3b82f6" },
-
-  // Forms & Inputs
   btn: { padding: "8px 16px", borderRadius: "6px", border: "none", cursor: "pointer", fontSize: "0.9rem", fontWeight: "500", transition: "0.2s", display: "inline-flex", alignItems: "center", gap: "6px" },
   primaryBtn: { background: "#3b82f6", color: "white" },
   secondaryBtn: { background: "#e2e8f0", color: "#475569" },
@@ -132,29 +53,19 @@ const styles = {
   select: { width: "100%", padding: "10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "0.95rem", marginBottom: "15px", background: "white" },
   formGroup: { marginBottom: "15px" },
   label: { display: "block", marginBottom: "5px", fontWeight: "600", fontSize: "0.85rem", color: "#64748b" },
-
-  // Badges
   badge: { padding: "4px 0", borderRadius: "6px", fontSize: "0.75rem", fontWeight: "bold", textTransform: "uppercase", display: "block", width: "100%", textAlign: "center" },
   statusActive: { background: "#dcfce7", color: "#166534" },
   statusInactive: { background: "#f1f5f9", color: "#94a3b8" },
   ectsBadge: { fontWeight:'bold', color:'#333', background:'#f1f5f9', padding:'6px 0', borderRadius:'6px', textAlign:'center', fontSize:'0.85rem' },
-
-  // Degree Badge
   degreeBadge: { padding: "4px 0", borderRadius: "6px", fontSize: "0.75rem", fontWeight: "bold", textAlign: "center", display: "block", width: "100%" },
-
-  // Category Badges
   catBadge: { padding: "4px 8px", borderRadius: "6px", fontSize: "0.75rem", fontWeight: "bold", textAlign: "center", textTransform: "uppercase", display: "inline-block" },
   catCore: { background: "#dbeafe", color: "#1e40af" },
   catElective: { background: "#fef3c7", color: "#92400e" },
   catShared: { background: "#f3e8ff", color: "#6b21a8" },
-
-  // Action Buttons
   actionContainer: { display: "flex", gap: "8px", justifyContent: "flex-end" },
   actionBtn: { padding: "4px 8px", borderRadius: "6px", border: "none", cursor: "pointer", fontSize: "0.8rem", fontWeight: "600" },
   editBtn: { background: "#e2e8f0", color: "#475569" },
   delBtn: { background: "#fee2e2", color: "#ef4444" },
-
-  // Modal
   overlay: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 },
   modal: { backgroundColor: "#ffffff", padding: "30px", borderRadius: "12px", width: "650px", maxWidth: "90%", maxHeight: "90vh", overflowY: "auto", boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)" }
 };
@@ -164,13 +75,18 @@ const formatDate = (isoDate) => {
   return new Date(isoDate).toLocaleDateString("de-DE");
 };
 
-export default function ProgramOverview({ initialData, clearInitialData }) {
+export default function ProgramOverview({ initialData, clearInitialData, currentUserRole }) {
   const [view, setView] = useState("LIST");
   const [selectedProgram, setSelectedProgram] = useState(null);
   const [programs, setPrograms] = useState([]);
   const [lecturers, setLecturers] = useState([]);
   const [specializations, setSpecializations] = useState([]);
   const [modules, setModules] = useState([]);
+
+  // ✅ PERMISSION LOGIC:
+  // Admin, PM, and HoSP can edit.
+  // Lecturers and Students are Read-Only (for now).
+  const canEdit = ["Admin", "PM", "HoSP"].includes(currentUserRole);
 
   const refreshNestedData = useCallback((progId) => {
     api.getSpecializations().then(res => setSpecializations((res || []).filter(s => s.program_id === progId)));
@@ -222,6 +138,7 @@ export default function ProgramOverview({ initialData, clearInitialData }) {
           lecturers={lecturers}
           onSelect={handleProgramClick}
           refresh={loadData}
+          canEdit={canEdit}
         />
       ) : (
         <ProgramWorkspace
@@ -232,13 +149,14 @@ export default function ProgramOverview({ initialData, clearInitialData }) {
           onBack={handleBack}
           refreshSpecs={() => refreshNestedData(selectedProgram.id)}
           onUpdateProgram={(updated) => setSelectedProgram(updated)}
+          canEdit={canEdit}
         />
       )}
     </div>
   );
 }
 
-function ProgramList({ programs, lecturers, onSelect, refresh }) {
+function ProgramList({ programs, lecturers, onSelect, refresh, canEdit }) {
   const [showCreate, setShowCreate] = useState(false);
   const [levelFilter, setLevelFilter] = useState("Bachelor");
   const [searchQuery, setSearchQuery] = useState("");
@@ -289,7 +207,10 @@ function ProgramList({ programs, lecturers, onSelect, refresh }) {
                 onChange={e => setSearchQuery(e.target.value)}
             />
         </div>
-        <button style={{ ...styles.btn, ...styles.primaryBtn }} onClick={() => setShowCreate(true)}>+ New Program</button>
+        {/* ✅ HIDE BUTTON IF NO PERMISSION */}
+        {canEdit && (
+            <button style={{ ...styles.btn, ...styles.primaryBtn }} onClick={() => setShowCreate(true)}>+ New Program</button>
+        )}
       </div>
 
       <div style={styles.listHeader}>
@@ -318,7 +239,6 @@ function ProgramList({ programs, lecturers, onSelect, refresh }) {
                             {p.status ? "Active" : "Inactive"}
                         </span>
                     </div>
-                    {/* Degree Badge */}
                     <div>
                         <span style={{ ...styles.degreeBadge, background: degreeStyle.bg, color: degreeStyle.color }}>
                             {p.degree_type || "-"}
@@ -329,6 +249,7 @@ function ProgramList({ programs, lecturers, onSelect, refresh }) {
                         <span style={styles.progSubtitle}>{p.acronym}</span>
                     </div>
                     <div style={styles.cellText}>{p.location || "-"}</div>
+                    {/* ✅ DISPLAY COMPUTED NAME (or fallback to String) */}
                     <div style={styles.cellText}>{p.head_of_program || "-"}</div>
                     <div style={styles.cellText}>{formatDate(p.start_date)}</div>
                     <div style={styles.ectsBadge}>{p.total_ects} ECTS</div>
@@ -343,7 +264,6 @@ function ProgramList({ programs, lecturers, onSelect, refresh }) {
             <div style={styles.modal}>
                 <h3 style={{marginTop:0}}>Create New Program</h3>
 
-                {/* Degree Type & Name Selection */}
                 <div style={{display:'flex', gap:'10px'}}>
                     <div style={{flex: 1}}>
                         <select
@@ -393,13 +313,12 @@ function ProgramList({ programs, lecturers, onSelect, refresh }) {
   );
 }
 
-function ProgramWorkspace({ program, lecturers, specializations, modules, onBack, refreshSpecs, onUpdateProgram }) {
+function ProgramWorkspace({ program, lecturers, specializations, modules, onBack, refreshSpecs, onUpdateProgram, canEdit }) {
   const [activeTab, setActiveTab] = useState("INFO");
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [editDraft, setEditDraft] = useState({});
 
-  // Module Management State
   const [moduleFormMode, setModuleFormMode] = useState("none");
   const [moduleEditingCode, setModuleEditingCode] = useState(null);
   const [moduleDraft, setModuleDraft] = useState({});
@@ -507,7 +426,10 @@ function ProgramWorkspace({ program, lecturers, specializations, modules, onBack
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
         <button style={{ ...styles.btn, background:"transparent", color:"#64748b", padding:0 }} onClick={onBack}>← Back to List</button>
-        <button style={{ ...styles.btn, ...styles.dangerBtn }} onClick={() => setShowDeleteModal(true)}>Delete Program</button>
+        {/* ✅ HIDE DELETE BUTTON */}
+        {canEdit && (
+            <button style={{ ...styles.btn, ...styles.dangerBtn }} onClick={() => setShowDeleteModal(true)}>Delete Program</button>
+        )}
       </div>
 
       <div style={{ marginBottom: "20px" }}>
@@ -533,17 +455,18 @@ function ProgramWorkspace({ program, lecturers, specializations, modules, onBack
           <div>
              <div style={{display:'flex', justifyContent:'space-between', marginBottom:'20px'}}>
                 <h3>Program Details</h3>
-                {!isEditing
-                    ? <button style={{...styles.btn, ...styles.secondaryBtn}} onClick={() => setIsEditing(true)}>Edit Details</button>
-                    : <div style={{display:'flex', gap:'10px'}}>
-                        <button style={{...styles.btn, background:'transparent', border:'1px solid #ccc'}} onClick={() => { setIsEditing(false); setEditDraft({...program}); }}>Cancel</button>
-                        <button style={{...styles.btn, ...styles.primaryBtn}} onClick={handleSaveInfo}>Save Changes</button>
-                      </div>
-                }
+                {/* ✅ HIDE EDIT TOGGLE */}
+                {canEdit && (
+                    !isEditing
+                        ? <button style={{...styles.btn, ...styles.secondaryBtn}} onClick={() => setIsEditing(true)}>Edit Details</button>
+                        : <div style={{display:'flex', gap:'10px'}}>
+                            <button style={{...styles.btn, background:'transparent', border:'1px solid #ccc'}} onClick={() => { setIsEditing(false); setEditDraft({...program}); }}>Cancel</button>
+                            <button style={{...styles.btn, ...styles.primaryBtn}} onClick={handleSaveInfo}>Save Changes</button>
+                        </div>
+                )}
              </div>
 
              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", maxWidth: "800px" }}>
-                {/* Degree Type Selector in Edit Mode */}
                 <div>
                     <label style={{ display: "block", color: "#64748b", fontSize: "0.85rem", marginBottom: "5px" }}>Degree Type</label>
                     {isEditing ? (
@@ -592,14 +515,16 @@ function ProgramWorkspace({ program, lecturers, specializations, modules, onBack
         )}
 
         {activeTab === "SPECS" && (
-            <SpecializationsManager programId={program.id} specializations={specializations} refresh={refreshSpecs} />
+            <SpecializationsManager programId={program.id} specializations={specializations} refresh={refreshSpecs} canEdit={canEdit} />
         )}
 
         {activeTab === "MODULES" && (
           <div>
             <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'15px'}}>
                 <h3 style={{margin:0}}>Curriculum Structure</h3>
-                <button style={{...styles.btn, ...styles.primaryBtn}} onClick={openModuleAdd}>+ New Module</button>
+                {canEdit && (
+                    <button style={{...styles.btn, ...styles.primaryBtn}} onClick={openModuleAdd}>+ New Module</button>
+                )}
             </div>
 
             <div style={styles.moduleHeader}>
@@ -635,9 +560,16 @@ function ProgramWorkspace({ program, lecturers, specializations, modules, onBack
                             </span>
                         </div>
 
+                        {/* ✅ PERMISSION CHECK ON MODULE ACTIONS */}
                         <div style={styles.actionContainer}>
-                            <button style={{...styles.actionBtn, ...styles.editBtn}} onClick={() => openModuleEdit(m)}>Edit</button>
-                            <button style={{...styles.actionBtn, ...styles.delBtn}} onClick={() => initiateModuleDelete(m)}>Delete</button>
+                            {canEdit ? (
+                                <>
+                                    <button style={{...styles.actionBtn, ...styles.editBtn}} onClick={() => openModuleEdit(m)}>Edit</button>
+                                    <button style={{...styles.actionBtn, ...styles.delBtn}} onClick={() => initiateModuleDelete(m)}>Delete</button>
+                                </>
+                            ) : (
+                                <span style={{fontSize:'0.8rem', color:'#94a3b8'}}>Read Only</span>
+                            )}
                         </div>
                     </div>
                 ))}
@@ -699,6 +631,7 @@ function ProgramWorkspace({ program, lecturers, specializations, modules, onBack
 
                 <hr style={{margin:'20px 0', border:'0', borderTop:'1px solid #eee'}} />
 
+                {/* Specialization Linking */}
                 <div style={{...styles.formGroup, background: '#f9f9f9', padding: '15px', borderRadius: '6px', border:'1px solid #eee'}}>
                     <label style={{...styles.label, marginBottom:'10px'}}>Linked Specializations</label>
                     <div style={{display:'flex', gap:'10px', marginBottom:'15px'}}>
@@ -750,7 +683,7 @@ const FieldDisplay = ({ label, value, onChange, isEditing, type = "text" }) => (
     </div>
 );
 
-function SpecializationsManager({ programId, specializations, refresh }) {
+function SpecializationsManager({ programId, specializations, refresh, canEdit }) {
     const [newSpec, setNewSpec] = useState({ name: "", acronym: "", start_date: "", status: true });
     const [editingSpecId, setEditingSpecId] = useState(null);
     const [editDraft, setEditDraft] = useState({});
@@ -783,28 +716,30 @@ function SpecializationsManager({ programId, specializations, refresh }) {
 
     return (
         <div>
-            <div style={{background:'#f8fafc', padding:'15px', borderRadius:'8px', marginBottom:'20px', display:'flex', gap:'10px', alignItems:'flex-end'}}>
-                <div style={{flex:2}}>
-                    <label style={{fontSize:'0.8rem', fontWeight:'bold'}}>Name</label>
-                    <input style={{...styles.input, marginBottom:0}} value={newSpec.name} onChange={e => setNewSpec({...newSpec, name: e.target.value})} placeholder="e.g. AI" />
+            {canEdit && (
+                <div style={{background:'#f8fafc', padding:'15px', borderRadius:'8px', marginBottom:'20px', display:'flex', gap:'10px', alignItems:'flex-end'}}>
+                    <div style={{flex:2}}>
+                        <label style={{fontSize:'0.8rem', fontWeight:'bold'}}>Name</label>
+                        <input style={{...styles.input, marginBottom:0}} value={newSpec.name} onChange={e => setNewSpec({...newSpec, name: e.target.value})} placeholder="e.g. AI" />
+                    </div>
+                    <div style={{flex:1}}>
+                        <label style={{fontSize:'0.8rem', fontWeight:'bold'}}>Acronym</label>
+                        <input style={{...styles.input, marginBottom:0}} value={newSpec.acronym} onChange={e => setNewSpec({...newSpec, acronym: e.target.value})} placeholder="AI" />
+                    </div>
+                    <div style={{flex:1}}>
+                        <label style={{fontSize:'0.8rem', fontWeight:'bold'}}>Start Date</label>
+                        <input type="date" style={{...styles.input, marginBottom:0}} value={newSpec.start_date} onChange={e => setNewSpec({...newSpec, start_date: e.target.value})} />
+                    </div>
+                    <div style={{flex:0.5}}>
+                        <label style={{fontSize:'0.8rem', fontWeight:'bold'}}>Status</label>
+                        <select style={{...styles.input, marginBottom:0}} value={newSpec.status} onChange={e => setNewSpec({...newSpec, status: e.target.value === 'true'})}>
+                            <option value="true">Active</option>
+                            <option value="false">Inactive</option>
+                        </select>
+                    </div>
+                    <button style={{...styles.btn, ...styles.primaryBtn, height:'42px'}} onClick={handleAdd}>Add Spec</button>
                 </div>
-                <div style={{flex:1}}>
-                    <label style={{fontSize:'0.8rem', fontWeight:'bold'}}>Acronym</label>
-                    <input style={{...styles.input, marginBottom:0}} value={newSpec.acronym} onChange={e => setNewSpec({...newSpec, acronym: e.target.value})} placeholder="AI" />
-                </div>
-                <div style={{flex:1}}>
-                    <label style={{fontSize:'0.8rem', fontWeight:'bold'}}>Start Date</label>
-                    <input type="date" style={{...styles.input, marginBottom:0}} value={newSpec.start_date} onChange={e => setNewSpec({...newSpec, start_date: e.target.value})} />
-                </div>
-                <div style={{flex:0.5}}>
-                    <label style={{fontSize:'0.8rem', fontWeight:'bold'}}>Status</label>
-                    <select style={{...styles.input, marginBottom:0}} value={newSpec.status} onChange={e => setNewSpec({...newSpec, status: e.target.value === 'true'})}>
-                        <option value="true">Active</option>
-                        <option value="false">Inactive</option>
-                    </select>
-                </div>
-                <button style={{...styles.btn, ...styles.primaryBtn, height:'42px'}} onClick={handleAdd}>Add Spec</button>
-            </div>
+            )}
 
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead>
@@ -848,8 +783,14 @@ function SpecializationsManager({ programId, specializations, refresh }) {
                                         </div>
                                     ) : (
                                         <div style={styles.actionContainer}>
-                                            <button style={{...styles.actionBtn, ...styles.editBtn}} onClick={() => startEdit(s)}>Edit</button>
-                                            <button style={{...styles.actionBtn, ...styles.delBtn}} onClick={() => handleDelete(s.id)}>Delete</button>
+                                            {canEdit ? (
+                                                <>
+                                                    <button style={{...styles.actionBtn, ...styles.editBtn}} onClick={() => startEdit(s)}>Edit</button>
+                                                    <button style={{...styles.actionBtn, ...styles.delBtn}} onClick={() => handleDelete(s.id)}>Delete</button>
+                                                </>
+                                            ) : (
+                                                <span style={{fontSize:'0.8rem', color:'#94a3b8'}}>Locked</span>
+                                            )}
                                         </div>
                                     )}
                                 </td>

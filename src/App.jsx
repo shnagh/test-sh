@@ -14,7 +14,9 @@ import AvailabilityOverview from "./components/AvailabilityOverview";
 function App() {
   const [activeTab, setActiveTab] = useState("programs");
 
-  // State to hold data when switching tabs (e.g., jumping to a specific program)
+  // ✅ NEW: Global Role State for Testing (Passed to Layout)
+  const [currentUserRole, setCurrentUserRole] = useState("Admin");
+
   const [navData, setNavData] = useState(null);
 
   const handleNavigate = (tab, data = null) => {
@@ -25,26 +27,31 @@ function App() {
   const renderContent = () => {
     switch (activeTab) {
       case "programs":
-        return <ProgramOverview initialData={navData} clearInitialData={() => setNavData(null)} />;
+        return <ProgramOverview initialData={navData} clearInitialData={() => setNavData(null)} currentUserRole={currentUserRole} />;
       case "modules":
-        return <ModuleOverview onNavigate={handleNavigate} />;
+        return <ModuleOverview onNavigate={handleNavigate} currentUserRole={currentUserRole} />;
       case "lecturers":
-        return <LecturerOverview />;
+        return <LecturerOverview currentUserRole={currentUserRole} />;
       case "rooms":
-        return <RoomOverview />;
+        return <RoomOverview currentUserRole={currentUserRole} />;
       case "groups":
-        return <GroupOverview />;
+        return <GroupOverview currentUserRole={currentUserRole} />;
       case "constraints":
-        return <ConstraintOverview />;
+        return <ConstraintOverview currentUserRole={currentUserRole} />;
       case "availabilities":
-        return <AvailabilityOverview />;
+        return <AvailabilityOverview currentUserRole={currentUserRole} />;
       default:
         return <ProgramOverview />;
     }
   };
 
   return (
-    <Layout activeTab={activeTab} setActiveTab={setActiveTab}>
+    <Layout
+      activeTab={activeTab}
+      setActiveTab={setActiveTab}
+      currentUserRole={currentUserRole}
+      setCurrentUserRole={setCurrentUserRole}
+    >
       {renderContent()}
     </Layout>
   );

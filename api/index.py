@@ -2,11 +2,50 @@ from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session, joinedload
 from typing import List
+from sqlalchemy import text
 
 # RELATIVE IMPORTS
 from . import models
 from . import schemas
+from . import auth
 from .database import engine, get_db
+
+
+# --- 🛠️ AUTO-MIGRATION SCRIPT ---
+def run_migrations():
+    with engine.connect() as connection:
+        connection.commit()
+        try:
+            # 1. Add 'degree_type'
+            connection.execute(text("SELECT degree_type FROM study_programs LIMIT 1"))
+        except Exception:
+            print("⚠️ 'degree_type' missing. Adding...")
+            try:
+                connection.execute(text("ALTER TABLE study_programs ADD COLUMN degree_type VARCHAR"))
+                connection.commit()
+            except Exception as e:
+                print(e)
+
+        try:
+            # 2. Add 'head_of_program_id'
+            connection.execute(text("SELECT head_of_program_id FROM study_programs LIMIT 1"))
+        except Exception:
+            print("⚠️ 'head_of_program_id' missing. Adding...")
+            try:
+                connection.execute(
+                    text("ALTER TABLE study_programs ADD COLUMN head_of_program_id INTEGER REFERENCES lecturers(ID)"))
+                connection.execute(text("ALTER TABLE study_programs ALTER COLUMN head_of_program DROP NOT NULL"))
+                connection.commit()
+            except Exception as e:
+                print(e)
+
+
+try:
+    models.Base.metadata.create_all(bind=engine)
+    run_migrations()
+    print(" DB connected.")
+except Exception as e:
+    print(" DB error:", e)
 
 app = FastAPI(title="Study Program Backend", root_path="/api")
 
@@ -18,17 +57,40 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-try:
-    models.Base.metadata.create_all(bind=engine)
-    print("✅ DB connected.")
-except Exception as e:
-    print("❌ DB error:", e)
-
 
 @app.get("/")
 def root(): return {"message": "Backend Online"}
 
 
+# --- AUTH (Ready for later) ---
+@app.post("/auth/login", response_model=schemas.Token)
+def login(form_data: schemas.LoginRequest, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.email == form_data.email).first()
+    # Simplified login logic for when you are ready to switch
+    if not user or not auth.verify_password(form_data.password, user.password_hash):
+        # Create default admin if missing
+        if not user and form_data.email == "admin@icss.com":
+            hashed = auth.get_password_hash("admin")
+            admin_user = models.User(email="admin@icss.com", password_hash=hashed, role="admin")
+            db.add(admin_user);
+            db.commit();
+            db.refresh(admin_user)
+            user = admin_user
+        else:
+            raise HTTPException(status_code=400, detail="Incorrect email/password")
+
+    access_token = auth.create_access_token(data={"sub": user.email, "role": user.role})
+    return {"access_token": access_token, "token_type": "bearer", "role": user.role}
+
+
+# --- PROGRAMS (Updated to use relation) ---
+@app.get("/study-programs/", response_model=List[schemas.StudyProgramResponse])
+def read_programs(db: Session = Depends(get_db)):
+    return db.query(models.StudyProgram).options(joinedload(models.StudyProgram.head_lecturer)).all()
+
+
+# ... (REST OF YOUR ENDPOINTS REMAIN UNCHANGED FROM PREVIOUS INDEX.PY) ...
+# Paste the rest of your endpoints (Lecturers, Modules, etc.) here
 # --- LECTURERS ---
 @app.get("/lecturers/", response_model=List[schemas.LecturerResponse])
 def read_lecturers(db: Session = Depends(get_db)):
@@ -110,11 +172,7 @@ def delete_module(code: str, db: Session = Depends(get_db)):
 
 
 # --- PROGRAMS ---
-@app.get("/study-programs/", response_model=List[schemas.StudyProgramResponse])
-def read_programs(db: Session = Depends(get_db)):
-    return db.query(models.StudyProgram).all()
-
-
+# (GET is handled above, add POST/PUT/DELETE)
 @app.post("/study-programs/", response_model=schemas.StudyProgramResponse)
 def create_program(p: schemas.StudyProgramCreate, db: Session = Depends(get_db)):
     row = models.StudyProgram(**p.model_dump())
@@ -141,7 +199,7 @@ def delete_program(id: int, db: Session = Depends(get_db)):
     return {"ok": True}
 
 
-# --- SPECIALIZATIONS (FIXED) ---
+# --- SPECIALIZATIONS ---
 @app.get("/specializations/", response_model=List[schemas.SpecializationResponse])
 def read_specs(db: Session = Depends(get_db)):
     return db.query(models.Specialization).all()

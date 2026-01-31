@@ -1,5 +1,17 @@
-from pydantic import BaseModel, Field, EmailStr, ConfigDict
+from pydantic import BaseModel, Field, EmailStr, ConfigDict, computed_field
 from typing import List, Optional, Dict, Any, Literal
+
+
+# --- AUTH & USER ---
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+    role: str
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
 
 
 # --- AVAILABILITY ---
@@ -19,22 +31,41 @@ class AvailabilityUpdate(BaseModel):
 class StudyProgramCreate(BaseModel):
     name: str
     acronym: str
-    head_of_program: str
+    head_of_program_id: Optional[int] = None  # ✅ ID Based
     start_date: str
     total_ects: int
     level: str = "Bachelor"
     status: bool = True
     location: Optional[str] = None
-    # ✅ NEW FIELD
     degree_type: Optional[str] = None
 
 
-class StudyProgramResponse(StudyProgramCreate):
+class StudyProgramResponse(BaseModel):
     id: int
+    name: str
+    acronym: str
+    start_date: str
+    total_ects: int
+    level: str
+    status: bool
+    location: Optional[str] = None
+    degree_type: Optional[str] = None
+    head_of_program_id: Optional[int] = None
+
+    # ✅ COMPUTED: Fetches name from DB relation so Frontend sees "Prof X" not "5"
+    head_lecturer: Optional['LecturerResponse'] = None
+
+    @computed_field
+    def head_of_program(self) -> str:
+        if self.head_lecturer:
+            return f"{self.head_lecturer.title} {self.head_lecturer.first_name} {self.head_lecturer.last_name}"
+        return "Unknown"
+
     model_config = ConfigDict(from_attributes=True)
 
 
-# --- SPECIALIZATIONS ---
+# ... [Keep Specialization, Module, Lecturer, Group, Room, Constraint schemas exactly as is] ...
+# Paste existing schemas here
 class SpecializationCreate(BaseModel):
     name: str
     acronym: str
