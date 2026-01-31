@@ -26,6 +26,7 @@ class User(Base):
 
 class Lecturer(Base):
     __tablename__ = "lecturers"
+    # ✅ FIX: Map to capitalized "ID" in database
     id = Column("ID", Integer, primary_key=True, index=True)
     first_name = Column(String(200), nullable=False)
     last_name = Column(String(200), nullable=True)
@@ -43,18 +44,15 @@ class StudyProgram(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True, nullable=False)
     acronym = Column(String, nullable=False)
-    # ✅ FIX: 'head_of_program' string column removed to prevent "Unknown" errors
     status = Column(Boolean, default=True)
     start_date = Column(String, nullable=False)
     total_ects = Column(Integer, nullable=False)
     location = Column(String(200), nullable=True)
     level = Column(String(50), default="Bachelor")
     degree_type = Column(String, nullable=True)
-
-    # Correct ID-based link for permission logic
     head_of_program_id = Column(Integer, ForeignKey("lecturers.ID"), nullable=True)
 
-    # This relationship allows the API to fetch the Lecturer object for the Frontend
+    # Allows fetching Title/First/Last dynamically
     head_lecturer = relationship("Lecturer")
 
 
@@ -88,6 +86,7 @@ class Specialization(Base):
 class Group(Base):
     __tablename__ = "groups"
     id = Column(Integer, primary_key=True, index=True)
+    # ✅ FIX: Map to capitalized names in database
     name = Column("Name", String(100), nullable=False)
     size = Column("Size", Integer, nullable=False)
     description = Column("Brief description", String(250), nullable=True)
@@ -103,6 +102,7 @@ class Room(Base):
     capacity = Column(Integer, nullable=False)
     type = Column(String, nullable=False)
     status = Column(Boolean, default=True, nullable=False)
+    # ✅ FIX: Map to capitalized "Equipment"
     equipment = Column("Equipment", String, nullable=True)
     location = Column(String(200), nullable=True)
 
