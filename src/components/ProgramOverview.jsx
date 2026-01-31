@@ -26,7 +26,7 @@ const styles = {
   toggleBtn: { padding: "6px 16px", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "0.9rem", fontWeight: "600", color: "#64748b", background: "transparent", transition: "all 0.2s" },
   toggleBtnActive: { background: "white", color: "#3b82f6", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" },
 
-  // LIST LAYOUT
+  // --- MAIN LIST LAYOUT (PROGRAMS) ---
   listContainer: { display: "flex", flexDirection: "column", gap: "12px" },
 
   listHeader: {
@@ -34,39 +34,70 @@ const styles = {
     gridTemplateColumns: "90px 2fr 1.2fr 1.5fr 1fr 80px",
     gap: "15px",
     padding: "0 25px",
-    marginBottom: "8px",
+    marginBottom: "5px",
     color: "#94a3b8",
     fontSize: "0.75rem",
     fontWeight: "700",
     textTransform: "uppercase",
-    letterSpacing: "0.05em"
+    letterSpacing: "0.05em",
+    alignItems: "center"
   },
 
   listCard: {
     background: "white",
     borderRadius: "8px",
-    border: "1px solid transparent",
+    border: "none",
     cursor: "pointer",
-    transition: "background-color 0.15s ease, transform 0.1s ease",
+    transition: "background-color 0.15s ease",
     display: "grid",
     gridTemplateColumns: "90px 2fr 1.2fr 1.5fr 1fr 80px",
     alignItems: "center",
     padding: "18px 25px",
     gap: "15px",
-    boxShadow: "0 2px 5px rgba(0,0,0,0.04)"
+    boxShadow: "0 2px 8px rgba(0,0,0,0.08)"
   },
 
-  // Hover State
-  listCardHover: {
-    backgroundColor: "#f1f5f9",
-    border: "1px solid #cbd5e1"
+  listCardHover: { backgroundColor: "#f1f5f9" },
+
+  // --- MODULE LIST LAYOUT (INSIDE TABS) ---
+  // Code | Name | Sem | Cat | ECTS | Assess | Room | Action
+  moduleHeader: {
+    display: "grid",
+    gridTemplateColumns: "80px 3fr 80px 100px 60px 1.2fr 1.2fr 80px",
+    gap: "15px",
+    padding: "10px 15px",
+    background: "#f8fafc",
+    borderBottom: "1px solid #e2e8f0",
+    color: "#94a3b8",
+    fontSize: "0.7rem",
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: "0.05em",
+    alignItems: "center",
+    borderTopLeftRadius: "8px",
+    borderTopRightRadius: "8px"
+  },
+
+  moduleCard: {
+    background: "white",
+    borderBottom: "1px solid #f1f5f9",
+    display: "grid",
+    gridTemplateColumns: "80px 3fr 80px 100px 60px 1.2fr 1.2fr 80px",
+    alignItems: "center",
+    padding: "12px 15px",
+    gap: "15px",
+    fontSize: "0.9rem"
   },
 
   // Typography
   progTitle: { margin: 0, fontSize: "1rem", fontWeight: "600", color: "#1e293b", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
   progSubtitle: { margin: 0, fontSize: "0.85rem", color: "#64748b", fontWeight: "500" },
-  cellText: { fontSize: "0.9rem", color: "#475569", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
-  labelSmall: { fontSize: "0.75rem", color: "#94a3b8", marginRight: "6px", fontWeight: "500" },
+
+  // Module Typography
+  codeText: { fontWeight: "700", color: "#3b82f6", fontSize: "0.9rem" },
+  nameText: { fontWeight: "600", color: "#1e293b", lineHeight: "1.3" },
+  cellText: { fontSize: "0.85rem", color: "#64748b", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
+  centeredCell: { textAlign: "center", fontSize: "0.85rem", color: "#64748b" },
 
   // Tabs
   tabContainer: { display: "flex", gap: "20px", marginBottom: "20px", borderBottom: "2px solid #e2e8f0" },
@@ -87,6 +118,12 @@ const styles = {
   statusInactive: { background: "#f1f5f9", color: "#94a3b8" },
   ectsBadge: { fontWeight:'bold', color:'#333', background:'#f1f5f9', padding:'6px 0', borderRadius:'6px', textAlign:'center', fontSize:'0.85rem' },
 
+  // Category Badges
+  catBadge: { padding: "4px 8px", borderRadius: "6px", fontSize: "0.75rem", fontWeight: "bold", textAlign: "center", textTransform: "uppercase", display: "inline-block" },
+  catCore: { background: "#dbeafe", color: "#1e40af" },
+  catElective: { background: "#fef3c7", color: "#92400e" },
+  catShared: { background: "#f3e8ff", color: "#6b21a8" },
+
   // Modal
   overlay: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 },
   modal: { background: "white", padding: "30px", borderRadius: "12px", width: "500px", maxWidth: "90%", maxHeight: "90vh", overflowY: "auto", boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)" }
@@ -105,7 +142,6 @@ export default function ProgramOverview({ initialData, clearInitialData }) {
   const [specializations, setSpecializations] = useState([]);
   const [modules, setModules] = useState([]);
 
-  // Memoize refreshNestedData to prevent re-creation
   const refreshNestedData = useCallback((progId) => {
     api.getSpecializations().then(res => setSpecializations((res || []).filter(s => s.program_id === progId)));
     api.getModules().then(res => setModules((res || []).filter(m => m.program_id === progId)));
@@ -126,11 +162,9 @@ export default function ProgramOverview({ initialData, clearInitialData }) {
         setPrograms(progData || []);
         setLecturers(lecData || []);
 
-        // Handle Deep Linking
         if (initialData && initialData.programId) {
             const target = (progData || []).find(p => p.id === initialData.programId);
             if (target) {
-                // Must ensure handleProgramClick is stable or part of dependency
                 setSelectedProgram(target);
                 setView("DETAIL");
                 refreshNestedData(target.id);
@@ -172,7 +206,7 @@ export default function ProgramOverview({ initialData, clearInitialData }) {
   );
 }
 
-// --- VIEW: LIST (Strict Grid) ---
+// --- VIEW: LIST ---
 function ProgramList({ programs, lecturers, onSelect, refresh }) {
   const [showCreate, setShowCreate] = useState(false);
   const [levelFilter, setLevelFilter] = useState("Bachelor");
@@ -222,7 +256,6 @@ function ProgramList({ programs, lecturers, onSelect, refresh }) {
         <button style={{ ...styles.btn, ...styles.primaryBtn }} onClick={() => setShowCreate(true)}>+ New Program</button>
       </div>
 
-      {/* HEADER ROW */}
       <div style={styles.listHeader}>
         <div>Status</div>
         <div>Program Name</div>
@@ -232,55 +265,33 @@ function ProgramList({ programs, lecturers, onSelect, refresh }) {
         <div style={{textAlign:'center'}}>ECTS</div>
       </div>
 
-      {/* DATA ROWS */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+      <div style={styles.listContainer}>
         {filtered.map(p => (
           <div
             key={p.id}
-            style={{
-                ...styles.listCard,
-                ...(hoverId === p.id ? styles.listCardHover : {})
-            }}
+            style={{ ...styles.listCard, ...(hoverId === p.id ? styles.listCardHover : {}) }}
             onClick={() => onSelect(p)}
             onMouseEnter={() => setHoverId(p.id)}
             onMouseLeave={() => setHoverId(null)}
           >
-            {/* 1. Status */}
             <div>
                 <span style={{ ...styles.badge, ...(p.status ? styles.statusActive : styles.statusInactive) }}>
                     {p.status ? "Active" : "Inactive"}
                 </span>
             </div>
-
-            {/* 2. Name */}
             <div style={{minWidth: 0}}>
                 <h4 style={styles.progTitle}>{p.name}</h4>
                 <span style={styles.progSubtitle}>{p.acronym}</span>
             </div>
-
-            {/* 3. Location */}
-            <div style={styles.cellText}>
-                {p.location || "-"}
-            </div>
-
-            {/* 4. HoSP */}
-            <div style={styles.cellText}>
-                {p.head_of_program || "-"}
-            </div>
-
-            {/* 5. Date */}
-            <div style={styles.cellText}>
-                {formatDate(p.start_date)}
-            </div>
-
-            {/* 6. ECTS */}
-            <div style={styles.ectsBadge}>{p.total_ects}</div>
+            <div style={styles.cellText}>{p.location || "-"}</div>
+            <div style={styles.cellText}>{p.head_of_program || "-"}</div>
+            <div style={styles.cellText}>{formatDate(p.start_date)}</div>
+            <div style={styles.ectsBadge}>{p.total_ects} ECTS</div>
           </div>
         ))}
         {filtered.length === 0 && <div style={{ color: "#94a3b8", padding: "40px", textAlign: "center", fontStyle: "italic" }}>No programs found matching your search.</div>}
       </div>
 
-      {/* CREATE MODAL */}
       {showCreate && (
         <div style={styles.overlay}>
             <div style={styles.modal}>
@@ -338,6 +349,12 @@ function ProgramWorkspace({ program, lecturers, specializations, modules, onBack
     } catch(e) { alert("Failed to update program."); }
   };
 
+  const getCategoryStyle = (cat) => {
+      if (cat === "Core") return styles.catCore;
+      if (cat === "Elective") return styles.catElective;
+      return styles.catShared;
+  };
+
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
@@ -380,7 +397,6 @@ function ProgramWorkspace({ program, lecturers, specializations, modules, onBack
              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", maxWidth: "800px" }}>
                 <FieldDisplay label="Program Name" isEditing={isEditing} value={editDraft.name} onChange={v => setEditDraft({...editDraft, name: v})} />
                 <FieldDisplay label="Acronym" isEditing={isEditing} value={editDraft.acronym} onChange={v => setEditDraft({...editDraft, acronym: v})} />
-
                 <div>
                     <label style={{ display: "block", color: "#64748b", fontSize: "0.85rem", marginBottom: "5px" }}>Head of Program</label>
                     {isEditing ? (
@@ -389,7 +405,6 @@ function ProgramWorkspace({ program, lecturers, specializations, modules, onBack
                         </select>
                     ) : <div style={{ fontWeight: "500" }}>{program.head_of_program}</div>}
                 </div>
-
                 <FieldDisplay label="Total ECTS" type="number" isEditing={isEditing} value={editDraft.total_ects} onChange={v => setEditDraft({...editDraft, total_ects: v})} />
                 <FieldDisplay label="Start Date" type="date" isEditing={isEditing} value={editDraft.start_date} onChange={v => setEditDraft({...editDraft, start_date: v})} />
                 <FieldDisplay label="Location" isEditing={isEditing} value={editDraft.location} onChange={v => setEditDraft({...editDraft, location: v})} />
@@ -402,7 +417,7 @@ function ProgramWorkspace({ program, lecturers, specializations, modules, onBack
                             {editDraft.status ? "Active" : "Inactive"}
                         </label>
                     ) : (
-                        <span style={{ ...styles.badge, ...(program.status ? styles.statusActive : styles.statusInactive) }}>
+                        <span style={{ ...styles.badge, ...(program.status ? styles.statusActive : styles.statusInactive), width: 'auto', display: 'inline-block', padding: '4px 12px' }}>
                             {program.status ? "Active" : "Inactive"}
                         </span>
                     )}
@@ -417,15 +432,42 @@ function ProgramWorkspace({ program, lecturers, specializations, modules, onBack
 
         {activeTab === "MODULES" && (
           <div>
-            <h3>Curriculum Structure</h3>
-            <div style={{ display: "grid", gap: "10px", marginTop: "20px" }}>
+            <h3>Modules</h3>
+
+            {/* --- MODULE GRID HEADER --- */}
+            <div style={styles.moduleHeader}>
+                <div>Code</div>
+                <div>Module Name</div>
+                <div style={{textAlign:'center'}}>Semester</div>
+                <div style={{textAlign:'center'}}>Category</div>
+                <div style={{textAlign:'center'}}>ECTS</div>
+                <div>Assessment</div>
+                <div>Room Type</div>
+                <div style={{textAlign:'right'}}>Status</div>
+            </div>
+
+            {/* --- MODULE GRID ROWS --- */}
+            <div style={{border: '1px solid #e2e8f0', borderTop: 'none', borderBottomLeftRadius: '8px', borderBottomRightRadius: '8px', overflow:'hidden'}}>
                 {modules.map(m => (
-                    <div key={m.module_code} style={{ padding: "15px", border: "1px solid #e2e8f0", borderRadius: "8px", display: "flex", justifyContent: "space-between" }}>
-                        <div><strong>{m.module_code}</strong> - {m.name}</div>
-                        <div style={{ color: "#64748b" }}>Semester {m.semester} • {m.ects} ECTS</div>
+                    <div key={m.module_code} style={styles.moduleCard}>
+                        <div style={styles.codeText}>{m.module_code}</div>
+                        <div style={styles.nameText}>{m.name}</div>
+                        <div style={styles.centeredCell}>{m.semester}</div>
+
+                        <div style={{textAlign:'center'}}>
+                            <span style={{...styles.catBadge, ...getCategoryStyle(m.category)}}>{m.category}</span>
+                        </div>
+
+                        <div style={{...styles.centeredCell, fontWeight:'bold'}}>{m.ects}</div>
+                        <div style={styles.cellText}>{m.assessment_type || "-"}</div>
+                        <div style={styles.cellText}>{m.room_type}</div>
+
+                        <div style={{textAlign:'right'}}>
+                            <span style={{fontSize:'0.8rem', color:'#16a34a', fontWeight:'600'}}>Linked</span>
+                        </div>
                     </div>
                 ))}
-                {modules.length === 0 && <div style={{ color: "#94a3b8" }}>No modules linked. Go to "Modules" to assign them.</div>}
+                {modules.length === 0 && <div style={{ color: "#94a3b8", padding: "40px", textAlign: "center", fontStyle: "italic" }}>No modules linked.</div>}
             </div>
           </div>
         )}
@@ -496,11 +538,10 @@ function SpecializationsManager({ programId, specializations, refresh }) {
 
     return (
         <div>
-            {/* Add New Row */}
             <div style={{background:'#f8fafc', padding:'15px', borderRadius:'8px', marginBottom:'20px', display:'flex', gap:'10px', alignItems:'flex-end'}}>
                 <div style={{flex:2}}>
                     <label style={{fontSize:'0.8rem', fontWeight:'bold'}}>Name</label>
-                    <input style={{...styles.input, marginBottom:0}} value={newSpec.name} onChange={e => setNewSpec({...newSpec, name: e.target.value})} placeholder="e.g. Artificial Intelligence" />
+                    <input style={{...styles.input, marginBottom:0}} value={newSpec.name} onChange={e => setNewSpec({...newSpec, name: e.target.value})} placeholder="e.g. AI" />
                 </div>
                 <div style={{flex:1}}>
                     <label style={{fontSize:'0.8rem', fontWeight:'bold'}}>Acronym</label>
@@ -551,7 +592,7 @@ function SpecializationsManager({ programId, specializations, refresh }) {
                                             <option value="false">Inactive</option>
                                         </select>
                                     ) : (
-                                        <span style={{ ...styles.badge, ...(s.status ? styles.statusActive : styles.statusInactive) }}>{s.status ? "Active" : "Inactive"}</span>
+                                        <span style={{ ...styles.badge, ...(s.status ? styles.statusActive : styles.statusInactive), width:'auto', padding:'4px 8px' }}>{s.status ? "Active" : "Inactive"}</span>
                                     )}
                                 </td>
                                 <td style={{ padding: "12px 10px", textAlign: "right" }}>
