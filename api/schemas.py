@@ -1,8 +1,12 @@
-from pydantic import BaseModel, ConfigDict
-from typing import List, Optional, Dict, Any
+from pydantic import BaseModel, Field, EmailStr, ConfigDict
+from typing import List, Optional, Dict, Any, Literal
+
+Hardness = Literal["Hard", "Soft"]
+Scope = Literal["Global", "Program", "Specialization", "Module", "Lecturer", "Group", "Room"]
+ProgramLevel = Literal["Bachelor", "Master"]
 
 
-# --- AVAILABILITY ---
+# --- Availability Schemas ---
 class AvailabilityResponse(BaseModel):
     id: int
     lecturer_id: int
@@ -15,22 +19,26 @@ class AvailabilityUpdate(BaseModel):
     schedule_data: Dict[str, Any]
 
 
-# --- PROGRAMS ---
-class StudyProgramCreate(BaseModel):
-    name: str
-    acronym: str
-    head_of_program: str
-    start_date: str
-    total_ects: int
-    level: str = "Bachelor"
+# --- User/Auth Schemas ---
+class UserCreate(BaseModel):
+    email: EmailStr
+    password: str
+    role: str = "student"
 
 
-class StudyProgramResponse(StudyProgramCreate):
+class UserOut(BaseModel):
     id: int
+    email: EmailStr
+    role: str
     model_config = ConfigDict(from_attributes=True)
 
 
-# --- SPECIALIZATIONS ---
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+
+# --- Specializations ---
 class SpecializationCreate(BaseModel):
     name: str
     acronym: str
@@ -42,6 +50,22 @@ class SpecializationCreate(BaseModel):
 class SpecializationResponse(SpecializationCreate):
     id: int
     study_program: Optional[str] = None
+    model_config = ConfigDict(from_attributes=True)
+
+
+# --- PROGRAMS (FIXED) ---
+class StudyProgramCreate(BaseModel):
+    name: str
+    acronym: str
+    head_of_program: str
+    start_date: str
+    total_ects: int
+    level: str = "Bachelor"
+    status: bool = True  # ✅ FIXED: Added this field so it's included in API responses
+
+
+class StudyProgramResponse(StudyProgramCreate):
+    id: int
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -66,9 +90,8 @@ class ModuleResponse(BaseModel):
     semester: int
     assessment_type: Optional[str] = None
     category: Optional[str] = None
-    program_id: Optional[int] = None  # Critical for filtering
+    program_id: Optional[int] = None
 
-    # Return the nested specs so we can display them
     specializations: List[SpecializationResponse] = []
 
     model_config = ConfigDict(from_attributes=True)
@@ -123,18 +146,25 @@ class RoomResponse(RoomCreate):
 
 
 # --- CONSTRAINTS ---
-class ConstraintTypeResponse(BaseModel):
-    id: int
+class ConstraintTypeCreate(BaseModel):
     name: str
-    active: bool
+    active: bool = True
+    constraint_level: Optional[str] = None
+    constraint_format: Optional[str] = None
+    constraint_rule: Optional[str] = None
+    constraint_target: Optional[str] = None
+
+
+class ConstraintTypeResponse(ConstraintTypeCreate):
+    id: int
     model_config = ConfigDict(from_attributes=True)
 
 
 class SchedulerConstraintCreate(BaseModel):
     constraint_type_id: int
-    hardness: str
-    weight: Optional[int] = None
-    scope: str
+    hardness: Hardness
+    weight: Optional[int] = Field(default=None, ge=0)
+    scope: Scope
     target_id: Optional[int] = None
     config: Dict[str, Any] = {}
     is_enabled: bool = True
