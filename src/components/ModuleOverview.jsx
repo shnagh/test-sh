@@ -46,7 +46,7 @@ const styles = {
     gridTemplateColumns: "80px 2fr 1.5fr 80px 100px 60px 1.2fr 1.2fr 110px",
     alignItems: "center",
     padding: "16px 25px",
-    gap: "15px", // Added gap between grid columns to prevent touching
+    gap: "15px",
     boxShadow: "0 2px 8px rgba(0,0,0,0.08)"
   },
 
@@ -54,16 +54,9 @@ const styles = {
 
   // Typography & Cell Styling
   codeText: { fontWeight: "700", color: "#3b82f6", fontSize: "0.95rem" },
-
-  // ✅ FIX: Removed 'whiteSpace: nowrap' to allow wrapping
   nameText: { fontWeight: "600", color: "#1e293b", lineHeight: "1.4" },
-
   programLink: { color: "#475569", cursor: "pointer", textDecoration: "underline", fontSize: "0.85rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
-
-  // Centered Cells
   centeredCell: { textAlign: "center", fontSize: "0.9rem", color: "#64748b" },
-
-  // Standard Text Cells
   cellText: { fontSize: "0.9rem", color: "#64748b", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
 
   // Category Badges
@@ -88,8 +81,6 @@ const styles = {
 
   formGroup: { marginBottom: "15px" },
   label: { display: "block", marginBottom: "5px", fontWeight: "600", fontSize: "0.85rem", color: "#64748b" },
-
-  // ✅ FIX: Added marginBottom to generic input so Delete prompt has space
   input: { width: "100%", padding: "10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "0.95rem", boxSizing: "border-box", marginBottom: "15px" },
   select: { width: "100%", padding: "10px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "0.95rem", background: "white", marginBottom: "15px" },
 };
@@ -231,11 +222,13 @@ export default function ModuleOverview({ onNavigate }) {
 
   return (
     <div style={styles.container}>
+      {/* Controls */}
       <div style={styles.controlsBar}>
         <input style={styles.searchBar} placeholder="Search modules..." value={query} onChange={(e) => setQuery(e.target.value)} />
         <button style={{...styles.btn, ...styles.primaryBtn}} onClick={openAdd}>+ New Module</button>
       </div>
 
+      {/* Header Row */}
       <div style={styles.listHeader}>
         <div>Code</div>
         <div>Module Name</div>
@@ -248,6 +241,7 @@ export default function ModuleOverview({ onNavigate }) {
         <div style={{textAlign: 'right'}}>Action</div>
       </div>
 
+      {/* List Container */}
       <div style={styles.listContainer}>
         {loading ? (
             <div style={{textAlign: 'center', padding: '40px', color: '#64748b'}}>Loading modules...</div>
@@ -298,6 +292,7 @@ export default function ModuleOverview({ onNavigate }) {
         {!loading && filteredModules.length === 0 && <div style={{ color: "#94a3b8", padding: "40px", textAlign: "center", fontStyle: "italic" }}>No modules found.</div>}
       </div>
 
+      {/* MODAL */}
       {(formMode === "add" || formMode === "edit") && (
         <div style={styles.overlay}>
             <div style={styles.modal}>
@@ -364,6 +359,7 @@ export default function ModuleOverview({ onNavigate }) {
         </div>
       )}
 
+      {/* DELETE MODAL */}
       {showDeleteModal && (
         <DeleteConfirmationModal
             moduleName={moduleToDelete?.name}
@@ -382,7 +378,8 @@ function DeleteConfirmationModal({ moduleName, onClose, onConfirm }) {
 
     return (
         <div style={styles.overlay}>
-            <div style={styles.modal} style={{...styles.modal, width:'450px'}}>
+            {/* FIXED: Removed duplicate style prop, merged styles */}
+            <div style={{...styles.modal, width:'450px'}}>
                 <h3 style={{ marginTop: 0, color: "#991b1b" }}>⚠️ Delete Module?</h3>
                 <p style={{ color: "#4b5563", marginBottom: "20px", lineHeight:'1.5' }}>
                     Are you sure you want to delete <strong>{moduleName}</strong>?<br/>
