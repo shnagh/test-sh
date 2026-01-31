@@ -40,27 +40,39 @@ export default function ProgramOverview() {
   useEffect(() => { loadPrograms(); }, []);
 
   const loadPrograms = () => {
-    api.getPrograms().then(res => setPrograms(res.data || []));
+    // ⚠️ FIXED: Removed .data because api.js returns the array directly
+    api.getPrograms().then(res => setPrograms(res || []));
   };
 
   const handleProgramClick = (prog) => {
     setSelectedProgram(prog);
     setView("DETAIL");
-    // Load nested data for this program
-    // In a real app, you might fetch specific specs/modules here
+
+    // ⚠️ FIXED: Removed .data here as well
     api.getSpecializations().then(res => {
-        // Filter purely frontend for now (assuming API returns all)
-        setSpecializations(res.data.filter(s => s.program_id === prog.id));
+        const allSpecs = res || [];
+        setSpecializations(allSpecs.filter(s => s.program_id === prog.id));
     });
+
+    // ⚠️ FIXED: Removed .data here as well
     api.getModules().then(res => {
-        setModules(res.data.filter(m => m.program_id === prog.id));
+        const allModules = res || [];
+        setModules(allModules.filter(m => m.program_id === prog.id));
     });
   };
 
   const handleBack = () => {
     setSelectedProgram(null);
     setView("LIST");
-    loadPrograms(); // Refresh in case of changes
+    loadPrograms();
+  };
+
+  // ⚠️ FIXED: Helper for refreshSpecs inside the workspace
+  const handleRefreshSpecs = () => {
+      api.getSpecializations().then(res => {
+          const allSpecs = res || [];
+          setSpecializations(allSpecs.filter(s => s.program_id === selectedProgram.id));
+      });
   };
 
   return (
@@ -77,7 +89,7 @@ export default function ProgramOverview() {
           specializations={specializations}
           modules={modules}
           onBack={handleBack}
-          refreshSpecs={() => api.getSpecializations().then(res => setSpecializations(res.data.filter(s => s.program_id === selectedProgram.id)))}
+          refreshSpecs={handleRefreshSpecs}
         />
       )}
     </div>
