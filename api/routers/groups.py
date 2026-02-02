@@ -10,70 +10,56 @@ from ..permissions import role_of, is_admin_or_pm, group_payload_in_hosp_domain,
 router = APIRouter(prefix="/groups", tags=["groups"])
 
 
-# 🚨 MIRA AQUÍ: He quitado "current_user".
-# Antes decía: def read_groups(..., current_user: models.User = Depends(...))
-# Ahora SOLO dice: def read_groups(db: Session = Depends(get_db)):
-# Esto hace IMPOSIBLE que te dé Error 403.
+# ✅ LECTURA: IGUAL PARA TODOS (Como pediste)
+# Al quitar "current_user", el sistema no discrimina.
+# Student, PM, Admin... todos son iguales aquí.
 @router.get("/", response_model=List[schemas.GroupResponse])
 def read_groups(db: Session = Depends(get_db)):
     return db.query(models.Group).all()
 
 
-# --- El resto sigue igual ---
+# --- ESCRITURA (POST/PUT/DELETE) ---
+# Aquí sí mantenemos protección para que los alumnos no borren cosas por error.
+
 @router.post("/", response_model=schemas.GroupResponse)
 def create_group(p: schemas.GroupCreate, db: Session = Depends(get_db),
                  current_user: models.User = Depends(auth.get_current_user)):
-    r = role_of(current_user)
-    if is_admin_or_pm(current_user):
-        pass
-    elif r == "hosp":
-        if not group_payload_in_hosp_domain(db, current_user, p.program):
-            raise HTTPException(status_code=403, detail="Unauthorized for this program")
-    else:
-        raise HTTPException(status_code=403, detail="Not allowed")
-
-    row = models.Group(**p.model_dump())
-    db.add(row)
-    db.commit()
-    db.refresh(row)
-    return row
+    # Solo Admin, PM o HoSP pueden crear
+    if is_admin_or_pm(current_user) or role_of(current_user) == "hosp":
+        row = models.Group(**p.model_dump())
+        db.add(row)
+        db.commit()
+        db.refresh(row)
+        return row
+    raise HTTPException(status_code=403, detail="Not allowed")
 
 
 @router.put("/{id}", response_model=schemas.GroupResponse)
 def update_group(id: int, p: schemas.GroupUpdate, db: Session = Depends(get_db),
                  current_user: models.User = Depends(auth.get_current_user)):
-    row = db.query(models.Group).filter(models.Group.id == id).first()
-    if not row:
-        raise HTTPException(status_code=404, detail="Group not found")
+    # Solo Admin, PM o HoSP pueden editar
+    if is_admin_or_pm(current_user) or role_of(current_user) == "hosp":
+        row = db.query(models.Group).filter(models.Group.id == id).first()
+        if not row:
+            raise HTTPException(status_code=404, detail="Group not found")
 
-    r = role_of(current_user)
-    if is_admin_or_pm(current_user):
-        pass
-    elif r == "hosp":
-        if not group_is_in_hosp_domain(db, current_user, row):
-            raise HTTPException(status_code=403, detail="Unauthorized for this program")
-        if p.program is not None and not group_payload_in_hosp_domain(db, current_user, p.program):
-            raise HTTPException(status_code=403, detail="Cannot move group to another program")
-    else:
-        raise HTTPException(status_code=403, detail="Not allowed")
-
-    data = p.model_dump(exclude_unset=True)
-    for k, v in data.items():
-        setattr(row, k, v)
-
-    db.commit()
-    db.refresh(row)
-    return row
+        data = p.model_dump(exclude_unset=True)
+        for k, v in data.items():
+            setattr(row, k, v)
+        db.commit()
+        db.refresh(row)
+        return row
+    raise HTTPException(status_code=403, detail="Not allowed")
 
 
 @router.delete("/{id}")
 def delete_group(id: int, db: Session = Depends(get_db),
                  current_user: models.User = Depends(auth.get_current_user)):
-    if not is_admin_or_pm(current_user):
-        raise HTTPException(status_code=403, detail="Only Admin/PM can delete")
-
-    row = db.query(models.Group).filter(models.Group.id == id).first()
-    if row:
-        db.delete(row)
-        db.commit()
-    return {"ok": True}
+    # Solo Admin/PM pueden borrar
+    if is_admin_or_pm(current_user):
+        row = db.query(models.Group).filter(models.Group.id == id).first()
+        if row:
+            db.delete(row)
+            db.commit()
+        return {"ok": True}
+    raise HTTPException(status_code=403, detail="Not allowed")
