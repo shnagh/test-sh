@@ -3,14 +3,12 @@ import api from "./api";
 import "./App.css";
 
 const Layout = ({ activeTab, setActiveTab, children, currentUserRole, setCurrentUserRole }) => {
-
   const role = (currentUserRole || "").toLowerCase();
 
   const NavLink = ({ id, icon, label, rolesAllowed = [] }) => {
     if (rolesAllowed.length > 0 && !rolesAllowed.includes(role)) {
       return null;
     }
-
     return (
       <div
         className={`nav-item ${activeTab === id ? "active" : ""}`}
@@ -25,7 +23,6 @@ const Layout = ({ activeTab, setActiveTab, children, currentUserRole, setCurrent
   const handleRoleChange = async (e) => {
     const newRole = e.target.value;
     if (newRole === "Guest") return;
-
     let email = "";
     const password = "password";
 
@@ -41,13 +38,11 @@ const Layout = ({ activeTab, setActiveTab, children, currentUserRole, setCurrent
       const data = await api.login(email, password);
       localStorage.setItem("token", data.access_token);
       localStorage.setItem("userRole", data.role);
-
-      if (data.lecturer_id !== null && data.lecturer_id !== undefined) {
+      if (data.lecturer_id != null) {
         localStorage.setItem("lecturerId", String(data.lecturer_id));
       } else {
         localStorage.removeItem("lecturerId");
       }
-
       setCurrentUserRole(data.role);
       window.location.reload();
     } catch (err) {
@@ -68,14 +63,12 @@ const Layout = ({ activeTab, setActiveTab, children, currentUserRole, setCurrent
     <div className="app-container">
       <aside className="sidebar">
         <div className="sidebar-header">ICSS Scheduler</div>
-
         <div className="sidebar-nav">
           <div className="nav-section-title">Curriculum</div>
           <NavLink id="programs" label="Study Programs" rolesAllowed={["admin", "pm", "hosp", "lecturer", "student"]} />
           <NavLink id="modules" label="Modules" rolesAllowed={["admin", "pm", "hosp", "lecturer", "student"]} />
 
           <div className="nav-section-title">People & Groups</div>
-          {/* ✅ Estudiantes pueden VER estas dos secciones */}
           <NavLink id="lecturers" label="Lecturers" rolesAllowed={["admin", "pm", "hosp", "lecturer", "student"]} />
           <NavLink id="groups" label="Student Groups" rolesAllowed={["admin", "pm", "hosp", "student"]} />
 
@@ -89,7 +82,7 @@ const Layout = ({ activeTab, setActiveTab, children, currentUserRole, setCurrent
 
         <div className="sidebar-footer" style={{ borderTop: '1px solid #334155', padding: '20px' }}>
           <label style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#94a3b8', display: 'block', marginBottom: '8px' }}>
-            Switch Role (Auto-Login):
+            Switch Role:
           </label>
           <select value={getDropdownValue()} onChange={handleRoleChange} style={{
               background: '#1e293b', color: 'white', border: '1px solid #475569',
@@ -107,15 +100,13 @@ const Layout = ({ activeTab, setActiveTab, children, currentUserRole, setCurrent
       <main className="main-content">
         <div className="page-header">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h1 className="page-title">
-              {activeTab.charAt(0).toUpperCase() + activeTab.slice(1).replace('-', ' ')}
-            </h1>
+            <h1 className="page-title">{activeTab.charAt(0).toUpperCase() + activeTab.slice(1).replace('-', ' ')}</h1>
             <span style={{ background: '#e2e8f0', color: '#475569', padding: '4px 12px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold' }}>
-              Logged in as: {currentUserRole}
+              Role: {currentUserRole}
             </span>
           </div>
         </div>
-        {children}
+        <div className="content-container">{children}</div>
       </main>
     </div>
   );
