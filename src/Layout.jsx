@@ -6,7 +6,6 @@ const Layout = ({ activeTab, setActiveTab, children, currentUserRole, setCurrent
   const role = (currentUserRole || "").toLowerCase();
 
   const NavLink = ({ id, icon, label, rolesAllowed = [] }) => {
-    // Si no hay roles definidos, o si el rol actual está incluido, mostramos el link
     if (rolesAllowed.length > 0 && !rolesAllowed.includes(role)) {
       return null;
     }
@@ -41,7 +40,6 @@ const Layout = ({ activeTab, setActiveTab, children, currentUserRole, setCurrent
       localStorage.setItem("token", data.access_token);
       localStorage.setItem("userRole", data.role);
 
-      // Usamos !== para evitar errores de linter
       if (data.lecturer_id !== null && data.lecturer_id !== undefined) {
         localStorage.setItem("lecturerId", String(data.lecturer_id));
       } else {
@@ -76,7 +74,7 @@ const Layout = ({ activeTab, setActiveTab, children, currentUserRole, setCurrent
 
           <div className="nav-section-title">People & Groups</div>
           <NavLink id="lecturers" label="Lecturers" rolesAllowed={["admin", "pm", "hosp", "lecturer", "student"]} />
-          {/* ✅ AQUÍ ESTÁ: Student tiene el mismo derecho que Admin */}
+          {/* ✅ AQUÍ ESTÁ: Student incluido */}
           <NavLink id="groups" label="Student Groups" rolesAllowed={["admin", "pm", "hosp", "lecturer", "student"]} />
 
           <div className="nav-section-title">Facilities</div>

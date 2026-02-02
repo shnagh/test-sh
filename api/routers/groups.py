@@ -5,27 +5,30 @@ from typing import List
 
 from ..database import get_db
 from .. import models, schemas, auth
-from ..permissions import role_of, is_admin_or_pm, group_payload_in_hosp_domain, group_is_in_hosp_domain
+from ..permissions import role_of, is_admin_or_pm, group_payload_in_hosp_domain
 
 router = APIRouter(prefix="/groups", tags=["groups"])
 
 
-# ✅ LECTURA: IGUAL PARA TODOS (Como pediste)
-# Al quitar "current_user", el sistema no discrimina.
-# Student, PM, Admin... todos son iguales aquí.
+# ✅ LECTURA ABIERTA (Sin preguntar quién eres)
+# Al quitar "current_user", eliminamos el 403 de raíz.
+# Funciona para Student, PM, y hasta para invitados.
 @router.get("/", response_model=List[schemas.GroupResponse])
 def read_groups(db: Session = Depends(get_db)):
     return db.query(models.Group).all()
 
 
-# --- ESCRITURA (POST/PUT/DELETE) ---
-# Aquí sí mantenemos protección para que los alumnos no borren cosas por error.
+# --- ESCRITURA: Mantenemos seguridad para que no rompan nada ---
 
 @router.post("/", response_model=schemas.GroupResponse)
 def create_group(p: schemas.GroupCreate, db: Session = Depends(get_db),
                  current_user: models.User = Depends(auth.get_current_user)):
-    # Solo Admin, PM o HoSP pueden crear
+    # Solo Admin, PM o HoSP
     if is_admin_or_pm(current_user) or role_of(current_user) == "hosp":
+        # Verificación extra para HoSP
+        if role_of(current_user) == "hosp" and not group_payload_in_hosp_domain(db, current_user, p.program):
+            raise HTTPException(status_code=403, detail="Unauthorized for this program")
+
         row = models.Group(**p.model_dump())
         db.add(row)
         db.commit()
@@ -37,11 +40,16 @@ def create_group(p: schemas.GroupCreate, db: Session = Depends(get_db),
 @router.put("/{id}", response_model=schemas.GroupResponse)
 def update_group(id: int, p: schemas.GroupUpdate, db: Session = Depends(get_db),
                  current_user: models.User = Depends(auth.get_current_user)):
-    # Solo Admin, PM o HoSP pueden editar
+    # Solo Admin, PM o HoSP
     if is_admin_or_pm(current_user) or role_of(current_user) == "hosp":
         row = db.query(models.Group).filter(models.Group.id == id).first()
         if not row:
             raise HTTPException(status_code=404, detail="Group not found")
+
+        # Verificación extra para HoSP
+        if role_of(current_user) == "hosp":
+            if not group_is_in_hosp_domain(db, current_user, row):
+                raise HTTPException(status_code=403, detail="Unauthorized")
 
         data = p.model_dump(exclude_unset=True)
         for k, v in data.items():
@@ -55,7 +63,7 @@ def update_group(id: int, p: schemas.GroupUpdate, db: Session = Depends(get_db),
 @router.delete("/{id}")
 def delete_group(id: int, db: Session = Depends(get_db),
                  current_user: models.User = Depends(auth.get_current_user)):
-    # Solo Admin/PM pueden borrar
+    # Solo Admin/PM
     if is_admin_or_pm(current_user):
         row = db.query(models.Group).filter(models.Group.id == id).first()
         if row:

@@ -46,50 +46,56 @@ const api = {
     return request("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) });
   },
 
-  // ... (RESTO DE TUS ENDPOINTS DE PROGRAMS, MODULES, ETC.) ...
-  // COPIA ESTOS SI NO ESTÁS SEGURO:
-
+  // ---------- PROGRAMS ----------
   getPrograms() { return request("/study-programs/"); },
   createProgram(payload) { return request("/study-programs/", { method: "POST", body: JSON.stringify(payload) }); },
   updateProgram(id, payload) { return request(`/study-programs/${id}`, { method: "PUT", body: JSON.stringify(payload) }); },
   deleteProgram(id) { return request(`/study-programs/${id}`, { method: "DELETE" }); },
 
+  // ---------- SPECIALIZATIONS ----------
+  getSpecializations() { return request("/specializations/"); },
+  createSpecialization(payload) { return request("/specializations/", { method: "POST", body: JSON.stringify(payload) }); },
+  updateSpecialization(id, payload) { return request(`/specializations/${id}`, { method: "PUT", body: JSON.stringify(payload) }); },
+  deleteSpecialization(id) { return request(`/specializations/${id}`, { method: "DELETE" }); },
+
+  // ---------- MODULES ----------
   getModules() { return request("/modules/"); },
   createModule(payload) { return request("/modules/", { method: "POST", body: JSON.stringify(payload) }); },
   updateModule(id, payload) { return request(`/modules/${id}`, { method: "PUT", body: JSON.stringify(payload) }); },
   deleteModule(id) { return request(`/modules/${id}`, { method: "DELETE" }); },
 
+  // ---------- LECTURERS ----------
   getLecturers() { return request("/lecturers/"); },
   createLecturer(payload) { return request("/lecturers/", { method: "POST", body: JSON.stringify(payload) }); },
   updateLecturer(id, payload) { return request(`/lecturers/${id}`, { method: "PUT", body: JSON.stringify(payload) }); },
   deleteLecturer(id) { return request(`/lecturers/${id}`, { method: "DELETE" }); },
 
-  // ✅ AQUÍ ESTÁ LA CLAVE PARA GRUPOS
+  // ---------- GROUPS ----------
+  // ✅ ESTA ES LA RUTA QUE FUNCIONARÁ
   getGroups() { return request("/groups/"); },
   createGroup(payload) { return request("/groups/", { method: "POST", body: JSON.stringify(payload) }); },
   updateGroup(id, payload) { return request(`/groups/${id}`, { method: "PUT", body: JSON.stringify(payload) }); },
   deleteGroup(id) { return request(`/groups/${id}`, { method: "DELETE" }); },
 
+  // ---------- ROOMS ----------
   getRooms() { return request("/rooms/"); },
   createRoom(payload) { return request("/rooms/", { method: "POST", body: JSON.stringify(payload) }); },
   updateRoom(id, payload) { return request(`/rooms/${id}`, { method: "PUT", body: JSON.stringify(payload) }); },
   deleteRoom(id) { return request(`/rooms/${id}`, { method: "DELETE" }); },
 
+  // ---------- CONSTRAINT TYPES ----------
   getConstraintTypes() { return request("/constraint-types/"); },
 
+  // ---------- SCHEDULER CONSTRAINTS ----------
   getConstraints() { return request("/scheduler-constraints/"); },
   createConstraint(payload) { return request("/scheduler-constraints/", { method: "POST", body: JSON.stringify(payload) }); },
   updateConstraint(id, payload) { return request(`/scheduler-constraints/${id}`, { method: "PUT", body: JSON.stringify(payload) }); },
   deleteConstraint(id) { return request(`/scheduler-constraints/${id}`, { method: "DELETE" }); },
 
+  // ---------- AVAILABILITIES ----------
   getAvailabilities() { return request("/availabilities/"); },
   updateLecturerWeek(payload) { return request("/availabilities/update", { method: "POST", body: JSON.stringify(payload) }); },
   deleteLecturerAvailability(lecturerId) { return request(`/availabilities/lecturer/${lecturerId}`, { method: "DELETE" }); },
-
-  getSpecializations() { return request("/specializations/"); },
-  createSpecialization(payload) { return request("/specializations/", { method: "POST", body: JSON.stringify(payload) }); },
-  updateSpecialization(id, payload) { return request(`/specializations/${id}`, { method: "PUT", body: JSON.stringify(payload) }); },
-  deleteSpecialization(id) { return request(`/specializations/${id}`, { method: "DELETE" }); },
 };
 
 export default api;
