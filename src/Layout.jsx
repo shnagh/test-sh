@@ -74,7 +74,7 @@ const Layout = ({ activeTab, setActiveTab, children, currentUserRole, setCurrent
 
           <div className="nav-section-title">People & Groups</div>
           <NavLink id="lecturers" label="Lecturers" rolesAllowed={["admin", "pm", "hosp", "lecturer", "student"]} />
-          {/* ✅ AQUÍ TODOS VEN LOS GRUPOS */}
+          {/* ✅ AQUÍ ESTÁ: Student incluido */}
           <NavLink id="groups" label="Student Groups" rolesAllowed={["admin", "pm", "hosp", "lecturer", "student"]} />
 
           <div className="nav-section-title">Facilities</div>

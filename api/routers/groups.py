@@ -5,18 +5,21 @@ from typing import List
 
 from ..database import get_db
 from .. import models, schemas, auth
-from ..permissions import role_of, is_admin_or_pm, group_payload_in_hosp_domain
+from ..permissions import role_of, is_admin_or_pm, group_payload_in_hosp_domain, group_is_in_hosp_domain
 
 router = APIRouter(prefix="/groups", tags=["groups"])
 
 
-# ✅ OJO AQUÍ: He borrado "current_user". Ahora es PÚBLICO.
+# 🚨 MIRA AQUÍ: He quitado "current_user".
+# Antes decía: def read_groups(..., current_user: models.User = Depends(...))
+# Ahora SOLO dice: def read_groups(db: Session = Depends(get_db)):
+# Esto hace IMPOSIBLE que te dé Error 403.
 @router.get("/", response_model=List[schemas.GroupResponse])
 def read_groups(db: Session = Depends(get_db)):
     return db.query(models.Group).all()
 
 
-# --- POST, PUT, DELETE siguen igual (con seguridad) ---
+# --- El resto sigue igual ---
 @router.post("/", response_model=schemas.GroupResponse)
 def create_group(p: schemas.GroupCreate, db: Session = Depends(get_db),
                  current_user: models.User = Depends(auth.get_current_user)):
@@ -49,7 +52,6 @@ def update_group(id: int, p: schemas.GroupUpdate, db: Session = Depends(get_db),
     elif r == "hosp":
         if not group_is_in_hosp_domain(db, current_user, row):
             raise HTTPException(status_code=403, detail="Unauthorized for this program")
-        # Corrección: Verificar si p.program existe antes de usarlo
         if p.program is not None and not group_payload_in_hosp_domain(db, current_user, p.program):
             raise HTTPException(status_code=403, detail="Cannot move group to another program")
     else:
