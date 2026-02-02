@@ -5,31 +5,31 @@ from typing import List
 
 from ..database import get_db
 from .. import models, schemas, auth
-from ..permissions import is_admin_or_pm, role_of, group_payload_in_hosp_domain, group_is_in_hosp_domain
+from ..permissions import role_of, is_admin_or_pm, group_payload_in_hosp_domain, group_is_in_hosp_domain
 
 router = APIRouter(prefix="/groups", tags=["groups"])
 
 
-# ✅ GET: ACCESO PÚBLICO (Sin verificar usuario)
-# Hemos quitado "current_user = Depends(auth.get_current_user)"
-# Al hacer esto, el backend NO comprueba el token para esta función.
-# Si el estudiante pide los datos, se los da sin preguntar.
+# ✅ GET: Lógica del "Código Antiguo"
+# Requiere estar logueado (current_user), pero NO bloquea por rol.
 @router.get("/", response_model=List[schemas.GroupResponse])
-def read_groups(db: Session = Depends(get_db)):
+def read_groups(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
     return db.query(models.Group).all()
 
 
-# 🔒 POST: CREAR (Mantenemos la seguridad aquí)
+# 🔒 POST: Crear (Seguridad Moderna) - Student NO pasa
 @router.post("/", response_model=schemas.GroupResponse)
 def create_group(p: schemas.GroupCreate, db: Session = Depends(get_db),
                  current_user: models.User = Depends(auth.get_current_user)):
     r = role_of(current_user)
+
     if is_admin_or_pm(current_user):
         pass
     elif r == "hosp":
         if not group_payload_in_hosp_domain(db, current_user, p.program):
             raise HTTPException(status_code=403, detail="Unauthorized for this program")
     else:
+        # Aquí bloqueamos explícitamente a Student y Lecturer para escritura
         raise HTTPException(status_code=403, detail="Not allowed to create groups")
 
     row = models.Group(**p.model_dump())
@@ -39,7 +39,7 @@ def create_group(p: schemas.GroupCreate, db: Session = Depends(get_db),
     return row
 
 
-# 🔒 PUT: EDITAR (Mantenemos la seguridad aquí)
+# 🔒 PUT: Editar (Seguridad Moderna) - Student NO pasa
 @router.put("/{id}", response_model=schemas.GroupResponse)
 def update_group(id: int, p: schemas.GroupUpdate, db: Session = Depends(get_db),
                  current_user: models.User = Depends(auth.get_current_user)):
@@ -67,7 +67,7 @@ def update_group(id: int, p: schemas.GroupUpdate, db: Session = Depends(get_db),
     return row
 
 
-# 🔒 DELETE: BORRAR (Mantenemos la seguridad aquí)
+# 🔒 DELETE: Borrar (Seguridad Moderna) - Solo Admin/PM
 @router.delete("/{id}")
 def delete_group(id: int, db: Session = Depends(get_db),
                  current_user: models.User = Depends(auth.get_current_user)):
