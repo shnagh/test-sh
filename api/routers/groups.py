@@ -5,19 +5,28 @@ from typing import List
 
 from ..database import get_db
 from .. import models, schemas, auth
-from ..permissions import role_of, is_admin_or_pm, group_payload_in_hosp_domain
+from ..permissions import role_of, is_admin_or_pm, group_payload_in_hosp_domain, group_is_in_hosp_domain
 
-# Mantenemos el prefijo /groups
+# Mantenemos el prefijo pero definimos rutas claras
 router = APIRouter(prefix="/groups", tags=["groups"])
 
 
-# ✅ CAMBIO CLAVE: Usamos "/list" en lugar de "/" para romper el caché
-@router.get("/list", response_model=List[schemas.GroupResponse])
-def read_groups_list(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
-    # Esta función es nueva, Vercel ESTÁ OBLIGADO a cargarla
+# ✅ SOLUCIÓN REAL: Creamos una ruta NUEVA llamada "/all-public"
+# Al cambiar el nombre de la ruta, Vercel se ve obligado a actualizarla.
+@router.get("/all-public", response_model=List[schemas.GroupResponse])
+def read_groups_public(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+    # Esta función DEJA PASAR a todos los usuarios logueados, sin importar el rol.
+    # Si tienes token válido, entras.
     return db.query(models.Group).all()
 
 
+# --- Dejamos la ruta antigua por si acaso, pero no la usaremos en el front ---
+@router.get("/", response_model=List[schemas.GroupResponse])
+def read_groups_root(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+    return db.query(models.Group).all()
+
+
+# --- CREAR (Protegido) ---
 @router.post("/", response_model=schemas.GroupResponse)
 def create_group(p: schemas.GroupCreate, db: Session = Depends(get_db),
                  current_user: models.User = Depends(auth.get_current_user)):
@@ -37,27 +46,41 @@ def create_group(p: schemas.GroupCreate, db: Session = Depends(get_db),
     return row
 
 
+# --- EDITAR (Protegido) ---
 @router.put("/{id}", response_model=schemas.GroupResponse)
 def update_group(id: int, p: schemas.GroupUpdate, db: Session = Depends(get_db),
                  current_user: models.User = Depends(auth.get_current_user)):
     row = db.query(models.Group).filter(models.Group.id == id).first()
-    if not row: raise HTTPException(status_code=404, detail="Group not found")
+    if not row:
+        raise HTTPException(status_code=404, detail="Group not found")
 
-    # ... (Lógica de update igual que tenías) ...
-    # Simplificado para asegurar que compile rápido:
-    if not is_admin_or_pm(current_user) and role_of(current_user) != "hosp":
+    r = role_of(current_user)
+    if is_admin_or_pm(current_user):
+        pass
+    elif r == "hosp":
+        if not group_is_in_hosp_domain(db, current_user, row):
+            raise HTTPException(status_code=403, detail="Unauthorized for this program")
+        if p.program is not None and not group_payload_in_hosp_domain(db, current_user, p.program):
+            raise HTTPException(status_code=403, detail="Cannot move group to another program")
+    else:
         raise HTTPException(status_code=403, detail="Not allowed")
 
     data = p.model_dump(exclude_unset=True)
-    for k, v in data.items(): setattr(row, k, v)
+    for k, v in data.items():
+        setattr(row, k, v)
+
     db.commit()
+    db.refresh(row)
     return row
 
 
+# --- BORRAR (Protegido) ---
 @router.delete("/{id}")
-def delete_group(id: int, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+def delete_group(id: int, db: Session = Depends(get_db),
+                 current_user: models.User = Depends(auth.get_current_user)):
     if not is_admin_or_pm(current_user):
-        raise HTTPException(status_code=403, detail="Only Admin/PM can delete")
+        raise HTTPException(status_code=403, detail="Only Admin/PM can delete groups")
+
     row = db.query(models.Group).filter(models.Group.id == id).first()
     if row:
         db.delete(row)

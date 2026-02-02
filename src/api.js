@@ -9,7 +9,6 @@ async function request(path, options = {}) {
   const cleanPath = path.startsWith("/") ? path : `/${path}`;
   const url = `${API_BASE_URL}${cleanPath}`;
 
-  // Auto-Attach Token
   const token = localStorage.getItem("token");
   const headers = {
     "Content-Type": "application/json",
@@ -21,17 +20,14 @@ async function request(path, options = {}) {
   }
 
   const res = await fetch(url, { ...options, headers });
-
   const text = await res.text().catch(() => "");
 
   if (!res.ok) {
-    // If token expired (401), auto-logout
     if (res.status === 401) {
         localStorage.removeItem("token");
         localStorage.removeItem("userRole");
-        window.location.href = "/"; // Force reload to login
+        window.location.href = "/";
     }
-
     try {
       const errJson = JSON.parse(text);
       throw new Error(errJson.detail || `${res.status} ${res.statusText}`);
@@ -78,8 +74,9 @@ const api = {
   deleteLecturer(id) { return request(`/lecturers/${id}`, { method: "DELETE" }); },
 
   // ---------- GROUPS ----------
-  // 🔴 CAMBIO IMPORTANTE: Apuntamos a /list para esquivar el caché y el bloqueo viejo
-  getGroups() { return request("/groups/list"); },
+  // ✅ CAMBIO CLAVE: Apuntamos a la nueva ruta pública
+  getGroups() { return request("/groups/all-public"); },
+
   createGroup(payload) { return request("/groups/", { method: "POST", body: JSON.stringify(payload) }); },
   updateGroup(id, payload) { return request(`/groups/${id}`, { method: "PUT", body: JSON.stringify(payload) }); },
   deleteGroup(id) { return request(`/groups/${id}`, { method: "DELETE" }); },
