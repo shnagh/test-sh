@@ -13,11 +13,12 @@ router = APIRouter(prefix="/lecturers", tags=["lecturers"])
 def read_lecturers(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
     r = role_of(current_user)
 
-    # Admin, PM, HoSP y Estudiantes: ✅ Pueden ver la lista completa (Read-only)
+    # ✅ ACCESO DE LECTURA PERMITIDO:
+    # Admin, PM, HoSP Y Student pueden ver la lista completa.
     if is_admin_or_pm(current_user) or r in ["hosp", "student"]:
         return db.query(models.Lecturer).all()
 
-    # Un Lecturer solo se ve a sí mismo por privacidad
+    # Los Lecturers solo se ven a sí mismos (privacidad)
     if r == "lecturer":
         lec_id = require_lecturer_link(current_user)
         lec = db.query(models.Lecturer).filter(models.Lecturer.id == lec_id).first()
@@ -28,7 +29,6 @@ def read_lecturers(db: Session = Depends(get_db), current_user: models.User = De
 @router.post("/", response_model=schemas.LecturerResponse)
 def create_lecturer(p: schemas.LecturerCreate, db: Session = Depends(get_db),
                     current_user: models.User = Depends(auth.get_current_user)):
-    # Solo Admin o PM pueden crear (Estudiantes y Lecturers: ❌)
     require_admin_or_pm(current_user)
     row = models.Lecturer(**p.model_dump())
     db.add(row)
@@ -39,7 +39,6 @@ def create_lecturer(p: schemas.LecturerCreate, db: Session = Depends(get_db),
 @router.put("/{id}", response_model=schemas.LecturerResponse)
 def update_lecturer(id: int, p: schemas.LecturerUpdate, db: Session = Depends(get_db),
                     current_user: models.User = Depends(auth.get_current_user)):
-    # Solo Admin o PM pueden editar (Estudiantes y Lecturers: ❌)
     require_admin_or_pm(current_user)
     row = db.query(models.Lecturer).filter(models.Lecturer.id == id).first()
     if not row:
@@ -56,7 +55,6 @@ def update_lecturer(id: int, p: schemas.LecturerUpdate, db: Session = Depends(ge
 @router.delete("/{id}")
 def delete_lecturer(id: int, db: Session = Depends(get_db),
                     current_user: models.User = Depends(auth.get_current_user)):
-    # Solo Admin o PM pueden borrar (Estudiantes y Lecturers: ❌)
     require_admin_or_pm(current_user)
     row = db.query(models.Lecturer).filter(models.Lecturer.id == id).first()
     if row:
