@@ -77,7 +77,6 @@ const styles = {
   // Modal
   overlay: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 },
 
-  // ✅ FIX: Ensure background color is explicit
   modal: {
     backgroundColor: "#ffffff",
     padding: "30px",
@@ -121,13 +120,48 @@ export default function ModuleOverview({ onNavigate }) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [moduleToDelete, setModuleToDelete] = useState(null);
 
+  // ✅ 1. ESTADO PARA EL ROL
+  const [currentRole, setCurrentRole] = useState(() => {
+    const raw = localStorage.getItem("userRole");
+    return (raw || "").replace(/"/g, "").trim().toLowerCase();
+  });
+
+  // ✅ 2. ESCUCHAR EL CAMBIO DE ROL
+  useEffect(() => {
+    const handleRoleUpdate = () => {
+      const raw = localStorage.getItem("userRole");
+      const cleanRole = (raw || "").replace(/"/g, "").trim().toLowerCase();
+      setCurrentRole(cleanRole);
+    };
+
+    window.addEventListener("role-changed", handleRoleUpdate);
+    window.addEventListener("storage", handleRoleUpdate);
+
+    return () => {
+      window.removeEventListener("role-changed", handleRoleUpdate);
+      window.removeEventListener("storage", handleRoleUpdate);
+    };
+  }, []);
+
+  // ✅ 3. LÓGICA DE PERMISOS DIVIDIDA (AQUÍ ESTÁ LA MAGIA)
+
+  // ¿Quién puede CREAR? (Admin, PM y HoSP) -> Solo Student y Lecturer están bloqueados
+  const canCreate = !["student", "lecturer"].includes(currentRole);
+
+  // ¿Quién puede EDITAR/BORRAR? (Solo Admin y PM) -> HoSP, Student y Lecturer bloqueados
+  const canModify = !["student", "lecturer", "hosp"].includes(currentRole);
+
+
   useEffect(() => { loadData(); }, []);
 
   const loadData = async () => {
     setLoading(true);
     try {
       const [modData, progData, specData, roomData] = await Promise.all([
-        api.getModules(), api.getPrograms(), api.getSpecializations(), api.getRooms()
+        api.getModules(),
+        api.getPrograms().catch(() => []),
+        api.getSpecializations(),
+        api.getRooms()
       ]);
       setModules(Array.isArray(modData) ? modData : []);
       setPrograms(Array.isArray(progData) ? progData : []);
@@ -235,7 +269,11 @@ export default function ModuleOverview({ onNavigate }) {
       {/* Controls */}
       <div style={styles.controlsBar}>
         <input style={styles.searchBar} placeholder="Search modules..." value={query} onChange={(e) => setQuery(e.target.value)} />
-        <button style={{...styles.btn, ...styles.primaryBtn}} onClick={openAdd}>+ New Module</button>
+
+        {/* ✅ BOTÓN NUEVO: Visible para Admin, PM y HoSP (usa canCreate) */}
+        {canCreate && (
+            <button style={{...styles.btn, ...styles.primaryBtn}} onClick={openAdd}>+ New Module</button>
+        )}
       </div>
 
       {/* Header Row */}
@@ -248,7 +286,8 @@ export default function ModuleOverview({ onNavigate }) {
         <div style={{textAlign: "center"}}>ECTS</div>
         <div>Assessment</div>
         <div>Room Type</div>
-        <div style={{textAlign: 'right'}}>Action</div>
+        {/* ✅ COLUMNA ACCIONES: Solo visible para Admin y PM (usa canModify) */}
+        {canModify && <div style={{textAlign: 'right'}}>Action</div>}
       </div>
 
       {/* List Container */}
@@ -291,10 +330,13 @@ export default function ModuleOverview({ onNavigate }) {
                     <div style={styles.cellText}>{m.assessment_type || "-"}</div>
                     <div style={styles.cellText}>{m.room_type}</div>
 
-                    <div style={styles.actionContainer}>
-                        <button style={{...styles.actionBtn, ...styles.editBtn}} onClick={() => openEdit(m)}>Edit</button>
-                        <button style={{...styles.actionBtn, ...styles.deleteBtn}} onClick={() => initiateDelete(m)}>Del</button>
-                    </div>
+                    {/* ✅ BOTONES ACCION: Solo visible para Admin y PM (usa canModify) */}
+                    {canModify && (
+                        <div style={styles.actionContainer}>
+                            <button style={{...styles.actionBtn, ...styles.editBtn}} onClick={() => openEdit(m)}>Edit</button>
+                            <button style={{...styles.actionBtn, ...styles.deleteBtn}} onClick={() => initiateDelete(m)}>Del</button>
+                        </div>
+                    )}
                 </div>
                 );
             })
@@ -302,7 +344,7 @@ export default function ModuleOverview({ onNavigate }) {
         {!loading && filteredModules.length === 0 && <div style={{ color: "#94a3b8", padding: "40px", textAlign: "center", fontStyle: "italic" }}>No modules found.</div>}
       </div>
 
-      {/* MODAL */}
+      {/* MODAL (Igual que antes) */}
       {(formMode === "add" || formMode === "edit") && (
         <div style={styles.overlay}>
             <div style={styles.modal}>
