@@ -46,31 +46,42 @@ export default function ConstraintOverview() {
     is_enabled: true
   });
 
-  // BUILDER STATE
+  // BUILDER STATE (Extended for new levels)
   const [builder, setBuilder] = useState({
     day: "Friday",
     roomType: "Computer Lab",
     limit: "4 hours",
-    gap: "at least 1 hour"
+    gap: "at least 1 hour",
+    // New Fields
+    startTime: "08:00",
+    endTime: "20:00",
+    semesterName: "Winter 2026",
+    slotDuration: "90",
+    breakDuration: "15",
+    workloadLimit: "18"
   });
 
   useEffect(() => { loadData(); }, []);
 
-  // --- AUTO-GENERATOR: Updates rule_text when dropdowns change ---
+  // --- AUTO-GENERATOR: Updates rule_text based on inputs ---
   useEffect(() => {
     if (!modalOpen) return;
 
-    // 1. DETERMINE THE ENTITY NAME
     const targetList = targets[draft.scope.toUpperCase()] || [];
     const targetObj = targetList.find(t => String(t.id) === String(draft.target_id));
     const targetName = targetObj ? targetObj.name : "All Entities";
 
-    const entity = `${draft.scope} "${targetName}"`;
+    // Construct the subject of the sentence
+    let entity = `${draft.scope} "${targetName}"`;
+    if (draft.target_id === "0" || draft.target_id === 0) {
+        if (draft.scope === "Global") entity = "The University";
+        else entity = `All ${draft.scope}s`;
+    }
 
     let generatedText = "";
 
-    // 2. BUILD THE SENTENCE BASED ON CATEGORY
     switch (draft.category) {
+      // --- EXISTING ---
       case "Time Preference":
         generatedText = `${entity} is not available on ${builder.day}s.`;
         break;
@@ -80,17 +91,28 @@ export default function ConstraintOverview() {
       case "Gap Limit":
         generatedText = `${entity} must have a gap of ${builder.gap} between classes.`;
         break;
-      case "Workload Limit":
-        generatedText = `${entity} cannot exceed ${builder.limit} of teaching per day.`;
+
+      // --- NEW LEVELS ---
+      case "University Policy": // Opening Hours
+        generatedText = `The University is open from ${builder.startTime} to ${builder.endTime}.`;
         break;
+      case "Academic Calendar": // Semesters / Holidays
+        generatedText = `${builder.semesterName} starts on ${draft.valid_from || '[Date]'} and ends on ${draft.valid_to || '[Date]'}.`;
+        break;
+      case "Time Definition": // Lecture Slots
+        generatedText = `Standard lecture slots are ${builder.slotDuration} minutes long with a ${builder.breakDuration} minute break.`;
+        break;
+      case "Legal Requirement": // Workload Compliance
+        generatedText = `Lecturers must not exceed ${builder.workloadLimit} teaching units per week.`;
+        break;
+
       default:
-        // For "General", we don't overwrite manual typing
-        return;
+        return; // Custom/General allows manual typing
     }
 
     setDraft(prev => ({ ...prev, rule_text: generatedText }));
 
-  }, [draft.category, draft.scope, draft.target_id, builder, modalOpen, targets]);
+  }, [draft.category, draft.scope, draft.target_id, draft.valid_from, draft.valid_to, builder, modalOpen, targets]);
 
   async function loadData() {
     try {
@@ -121,7 +143,10 @@ export default function ConstraintOverview() {
       name: "", category: "Time Preference", scope: "Lecturer", target_id: "0",
       valid_from: "", valid_to: "", rule_text: "", is_enabled: true
     });
-    setBuilder({ day: "Friday", roomType: "Computer Lab", limit: "4 hours", gap: "at least 1 hour" });
+    setBuilder({
+        day: "Friday", roomType: "Computer Lab", limit: "4 hours", gap: "at least 1 hour",
+        startTime: "08:00", endTime: "20:00", semesterName: "Winter 2026", slotDuration: "90", breakDuration: "15", workloadLimit: "18"
+    });
     setModalOpen(true);
   }
 
@@ -153,8 +178,75 @@ export default function ConstraintOverview() {
     } catch (e) { alert("Error saving constraint."); }
   }
 
+  // --- Auto-Switch Scope based on Category (UX Helper) ---
+  const handleCategoryChange = (newCategory) => {
+    let newScope = draft.scope;
+    let newTarget = draft.target_id;
+
+    if (["University Policy", "Academic Calendar", "Time Definition"].includes(newCategory)) {
+        newScope = "Global";
+        newTarget = "0";
+    } else if (newCategory === "Legal Requirement") {
+        newScope = "Lecturer";
+        newTarget = "0"; // All Lecturers
+    }
+
+    setDraft({ ...draft, category: newCategory, scope: newScope, target_id: newTarget });
+  };
+
   // --- Dynamic Inputs based on Category ---
   const renderBuilderInputs = () => {
+    // 1. UNIVERSITY LEVEL
+    if (draft.category === "University Policy") {
+        return (
+            <div style={{display:'flex', gap:'10px', alignItems:'center'}}>
+                <span>Open from</span>
+                <input type="time" style={{...styles.input, width:'auto'}} value={builder.startTime} onChange={e => setBuilder({...builder, startTime: e.target.value})} />
+                <span>to</span>
+                <input type="time" style={{...styles.input, width:'auto'}} value={builder.endTime} onChange={e => setBuilder({...builder, endTime: e.target.value})} />
+            </div>
+        );
+    }
+    // 2. SEMESTER LEVEL
+    if (draft.category === "Academic Calendar") {
+        return (
+            <div style={{display:'flex', gap:'10px', alignItems:'center'}}>
+                <input style={{...styles.input, flex:1}} placeholder="Semester Name" value={builder.semesterName} onChange={e => setBuilder({...builder, semesterName: e.target.value})} />
+                <span style={{fontSize:'0.85rem', color:'#666'}}>(Set Start/End dates below)</span>
+            </div>
+        );
+    }
+    // 3. LECTURE TIME
+    if (draft.category === "Time Definition") {
+        return (
+            <div style={{display:'flex', gap:'10px', alignItems:'center'}}>
+                <span>Slot Duration:</span>
+                <select style={{...styles.select, width:'auto'}} value={builder.slotDuration} onChange={e => setBuilder({...builder, slotDuration: e.target.value})}>
+                    <option value="45">45 mins</option>
+                    <option value="60">60 mins</option>
+                    <option value="90">90 mins</option>
+                </select>
+                <span>Break:</span>
+                <select style={{...styles.select, width:'auto'}} value={builder.breakDuration} onChange={e => setBuilder({...builder, breakDuration: e.target.value})}>
+                    <option value="0">None</option>
+                    <option value="15">15 mins</option>
+                    <option value="30">30 mins</option>
+                </select>
+            </div>
+        );
+    }
+    // 4. LEGAL COMPLIANCE
+    if (draft.category === "Legal Requirement") {
+        return (
+            <div style={{display:'flex', gap:'10px', alignItems:'center'}}>
+                <span>Max Weekly Workload:</span>
+                <input type="number" style={{...styles.input, width:'80px'}} value={builder.workloadLimit} onChange={e => setBuilder({...builder, workloadLimit: e.target.value})} />
+                <span>Teaching Units</span>
+            </div>
+        );
+    }
+
+    // --- EXISTING ---
     if (draft.category === "Time Preference") {
         return (
             <div style={{display:'flex', gap:'10px'}}>
@@ -184,20 +276,6 @@ export default function ConstraintOverview() {
                     <option value="at least 1 hour">at least 1 hour</option>
                     <option value="max 2 hours">max 2 hours</option>
                 </select>
-            </div>
-        );
-    }
-    if (draft.category === "Workload Limit") {
-        return (
-            <div style={{display:'flex', gap:'10px'}}>
-                <span style={{alignSelf:'center', color:'#666'}}>Max teaching time:</span>
-                <select style={styles.select} value={builder.limit} onChange={e => setBuilder({...builder, limit: e.target.value})}>
-                    <option value="2 hours">2 hours</option>
-                    <option value="4 hours">4 hours</option>
-                    <option value="6 hours">6 hours</option>
-                    <option value="8 hours">8 hours</option>
-                </select>
-                <span style={{alignSelf:'center', color:'#666'}}>per day.</span>
             </div>
         );
     }
@@ -243,7 +321,6 @@ export default function ConstraintOverview() {
                         "{c.rule_text}"
                     </div>
                  </td>
-                 {/* ✅ FIXED: Merged duplicate styles here */}
                  <td style={{...styles.td, fontSize:'0.85rem', color:'#64748b'}}>
                     {c.valid_from ? `${formatDate(c.valid_from)} → ${formatDate(c.valid_to)}` : "Always Valid"}
                  </td>
@@ -273,7 +350,7 @@ export default function ConstraintOverview() {
                 <label style={styles.label}>Rule Name (Internal)</label>
                 <input
                   style={styles.input}
-                  placeholder="e.g. Mohammed Friday Restriction"
+                  placeholder="e.g. Winter Semester Dates"
                   value={draft.name}
                   onChange={e => setDraft({...draft, name: e.target.value})}
                 />
@@ -284,7 +361,7 @@ export default function ConstraintOverview() {
                <div style={{flex:1}}>
                   <label style={styles.label}>1. Context (Who?)</label>
                   <select style={styles.select} value={draft.scope} onChange={e => setDraft({...draft, scope: e.target.value, target_id: "0"})}>
-                    {["Lecturer", "Group", "Module", "Room", "Program"].map(s => <option key={s} value={s}>{s}</option>)}
+                    {["Lecturer", "Group", "Module", "Room", "Program", "Global"].map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                </div>
                <div style={{flex:1}}>
@@ -302,11 +379,18 @@ export default function ConstraintOverview() {
 
                 <div style={{marginBottom:'10px'}}>
                     <label style={{fontSize:'0.85rem', color:'#666', marginBottom:'4px', display:'block'}}>Category</label>
-                    <select style={styles.select} value={draft.category} onChange={e => setDraft({...draft, category: e.target.value})}>
-                        <option value="Time Preference">Time Preference</option>
-                        <option value="Room Requirement">Room Requirement</option>
-                        <option value="Gap Limit">Gap Limit</option>
-                        <option value="Workload Limit">Workload Limit</option>
+                    <select style={styles.select} value={draft.category} onChange={e => handleCategoryChange(e.target.value)}>
+                        <optgroup label="General Preferences">
+                            <option value="Time Preference">Time Preference</option>
+                            <option value="Room Requirement">Room Requirement</option>
+                            <option value="Gap Limit">Gap Limit</option>
+                        </optgroup>
+                        <optgroup label="University & Legal">
+                            <option value="University Policy">University Policy (Open Hours)</option>
+                            <option value="Academic Calendar">Academic Calendar (Semester)</option>
+                            <option value="Time Definition">Time Definition (Slots)</option>
+                            <option value="Legal Requirement">Legal Requirement (Workload)</option>
+                        </optgroup>
                         <option value="General">Custom / Other</option>
                     </select>
                 </div>
