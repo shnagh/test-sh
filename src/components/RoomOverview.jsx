@@ -376,7 +376,7 @@ export default function RoomOverview() {
                 <td style={styles.td}>{r.capacity}</td>
                 <td style={{...styles.td, textAlign:'center'}}>
                   <span style={styles.statusBadge(r.available)}>
-                    {r.available ? 'Available' : 'Occupied'}
+                    {r.available ? 'Available' : 'Unavailable'}
                   </span>
                 </td>
                 <td style={{...styles.td, textAlign:'right', whiteSpace:'nowrap'}}>
