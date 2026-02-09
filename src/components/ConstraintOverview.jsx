@@ -84,6 +84,7 @@ export default function ConstraintOverview() {
         generatedText = `${entity} cannot exceed ${builder.limit} of teaching per day.`;
         break;
       default:
+        // For "General", we don't overwrite manual typing
         return;
     }
 
