@@ -91,7 +91,7 @@ export default function ConstraintOverview() {
 
     setDraft(prev => ({ ...prev, rule_text: generatedText }));
 
-  }, [draft.category, draft.scope, draft.target_id, builder, modalOpen]);
+  }, [draft.category, draft.scope, draft.target_id, builder, modalOpen, targets]); // ✅ FIXED: Added 'targets' to dependency array
 
   async function loadData() {
     try {
