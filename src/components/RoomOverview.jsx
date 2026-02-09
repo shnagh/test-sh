@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import api from "../api";
 
 // --- STYLES ---
@@ -118,27 +118,25 @@ const styles = {
 };
 
 const STANDARD_TYPES = ["Lecture Classroom", "Computer Lab", "Seminar"];
+const CAMPUSES = ["Berlin", "Dusseldorf", "Munich"];
 
 export default function RoomOverview() {
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
-  
+
   // --- USER PROFILE LOGIC ---
-  // This mimics getting data from your auth system.
-  // Change "Berlin" to "Dusseldorf" or "Munich" to test other defaults.
   const [userProfile] = useState({
     name: "Stephanie",
-    homeCampus: "Berlin" 
+    homeCampus: "Berlin"
   });
 
   // Automatically start at Stephanie's home campus
   const [selectedCampus, setSelectedCampus] = useState(userProfile.homeCampus);
-  
+
   const [formMode, setFormMode] = useState("overview");
   const [editingId, setEditingId] = useState(null);
   const [customTypes, setCustomTypes] = useState([]);
-  const campuses = ["Berlin", "Dusseldorf", "Munich"];
 
   const [draft, setDraft] = useState({
     name: "",
@@ -150,7 +148,8 @@ export default function RoomOverview() {
     equipment: ""
   });
 
-  async function loadRooms() {
+  // WRAPPED IN useCallback TO FIX LINT/BUILD ERROR
+  const loadRooms = useCallback(async () => {
     setLoading(true);
     try {
       const data = await api.getRooms();
@@ -164,7 +163,7 @@ export default function RoomOverview() {
         return {
             ...r,
             available: r.status,
-            campus: campuses.includes(derivedCampus) ? derivedCampus : "Other",
+            campus: CAMPUSES.includes(derivedCampus) ? derivedCampus : "Other",
             specific_location: derivedSpecific
         };
       });
@@ -181,11 +180,11 @@ export default function RoomOverview() {
     } finally {
       setLoading(false);
     }
-  }
+  }, []); // Empty dependency array is safe because CAMPUSES is now external constant
 
   useEffect(() => {
     loadRooms();
-  }, []);
+  }, [loadRooms]); // Now safe to include loadRooms
 
   function openAdd() {
     setEditingId(null);
@@ -295,7 +294,7 @@ export default function RoomOverview() {
           <p style={{color: '#718096'}}>Select a location to view rooms</p>
         </div>
         <div style={styles.campusGrid}>
-          {campuses.map(campus => (
+          {CAMPUSES.map(campus => (
             <div
               key={campus}
               style={styles.campusCard}
