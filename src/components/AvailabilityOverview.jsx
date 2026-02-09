@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import api from "../api"; // <--- FIXED IMPORT (Goes up one folder)
+import api from "../api";
 
 const styles = {
   container: { padding: "20px", fontFamily: "'Segoe UI', sans-serif", color: "#333", maxWidth: "100%" },
@@ -273,7 +273,8 @@ export default function AvailabilityOverview() {
                   .filter(l => {
                       // Filter: Only show if NO schedule exists, OR if it's the current one being edited
                       const hasSchedule = availabilities.some(a => a.lecturer_id === l.id);
-                      return !hasSchedule || l.id == selectedLecturerId;
+                      // FIXED: Using strict equality and ensuring types match
+                      return !hasSchedule || l.id === parseInt(selectedLecturerId);
                   })
                   .map(l => (
                     <option key={l.id} value={l.id}>{l.first_name} {l.last_name}</option>
