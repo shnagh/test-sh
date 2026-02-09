@@ -90,7 +90,7 @@ export default function ConstraintOverview() {
 
     setDraft(prev => ({ ...prev, rule_text: generatedText }));
 
-  }, [draft.category, draft.scope, draft.target_id, builder, modalOpen, targets]); // ✅ FIXED: Added 'targets' to dependency
+  }, [draft.category, draft.scope, draft.target_id, builder, modalOpen, targets]);
 
   async function loadData() {
     try {
@@ -243,7 +243,8 @@ export default function ConstraintOverview() {
                         "{c.rule_text}"
                     </div>
                  </td>
-                 <td style={styles.td} style={{fontSize:'0.85rem', color:'#64748b'}}>
+                 {/* ✅ FIXED: Merged duplicate styles here */}
+                 <td style={{...styles.td, fontSize:'0.85rem', color:'#64748b'}}>
                     {c.valid_from ? `${formatDate(c.valid_from)} → ${formatDate(c.valid_to)}` : "Always Valid"}
                  </td>
                  <td style={styles.td}>
