@@ -130,12 +130,19 @@ export default function ConstraintOverview() {
 
     const targetList = targets[draft.scope.toUpperCase()] || [];
     const targetObj = targetList.find(t => String(t.id) === String(draft.target_id));
-    const targetName = targetObj ? targetObj.name : "All Entities";
 
-    let entity = `${draft.scope} "${targetName}"`;
-    if (draft.target_id === "0" || draft.target_id === 0) {
-        if (draft.scope === "University") entity = "The University";
-        else entity = `All ${draft.scope}s`;
+    // Naming Logic: "The University" vs "The Berlin Campus"
+    let entity = `${draft.scope} "${targetObj ? targetObj.name : 'Unknown'}"`;
+    if (draft.scope === "University") {
+        if (draft.target_id === "0" || draft.target_id === 0) {
+            entity = "The University";
+        } else {
+            // Remove "Campus: " prefix if present for cleaner sentence
+            const cleanName = targetObj?.name.replace("Campus: ", "") || "Campus";
+            entity = `The ${cleanName} Campus`;
+        }
+    } else if (draft.target_id === "0" || draft.target_id === 0) {
+        entity = `All ${draft.scope}s`;
     }
 
     let generatedText = "";
@@ -144,10 +151,10 @@ export default function ConstraintOverview() {
       // University
       case "University Open Days":
         const daysText = builder.selectedDays.length > 0 ? builder.selectedDays.join(", ") : "No Days";
-        generatedText = `The University is open on: ${daysText}.`;
+        generatedText = `${entity} is open on: ${daysText}.`;
         break;
       case "University Policy":
-        generatedText = `The University is open from ${builder.startTime} to ${builder.endTime}.`;
+        generatedText = `${entity} is open from ${builder.startTime} to ${builder.endTime}.`;
         break;
       case "Academic Calendar":
         generatedText = `${builder.semesterSeason} Semester ${builder.semesterYear} starts on ${draft.valid_from || '[Date]'} and ends on ${draft.valid_to || '[Date]'}.`;
@@ -164,8 +171,7 @@ export default function ConstraintOverview() {
         generatedText = `${entity} is unavailable on ${builder.day}s.`;
         break;
       case "Legal Requirement":
-        // Uses the specific entity name now (e.g. "Lecturer 'Smith'")
-        generatedText = `${entity} must not exceed ${builder.workloadLimit} teaching units per week.`;
+        generatedText = `Lecturers must not exceed ${builder.workloadLimit} teaching units per week.`;
         break;
 
       // Module / Program
@@ -203,8 +209,19 @@ export default function ConstraintOverview() {
 
       setConstraints(cRes || []);
 
+      // 1. EXTRACT ROOM TYPES
       const uniqueRoomTypes = [...new Set((rRes || []).map(r => r.type))].filter(Boolean);
       setRoomTypes(uniqueRoomTypes);
+
+      // 2. EXTRACT LOCATIONS (CAMPUSES) from Rooms
+      // We look for unique 'location' strings in the rooms table
+      const uniqueLocations = [...new Set((rRes || []).map(r => r.location))].filter(Boolean);
+
+      // Map locations to a pseudo-ID (10000 + index) so they fit in the 'Integer' target_id column
+      const campusTargets = uniqueLocations.map((loc, idx) => ({
+          id: 10000 + idx,
+          name: `Campus: ${loc}`
+      }));
 
       setTargets({
         LECTURER: (lRes || []).map(x => ({ id: x.id, name: `${x.first_name} ${x.last_name}` })),
@@ -212,7 +229,9 @@ export default function ConstraintOverview() {
         MODULE: (mRes || []).map(x => ({ id: x.module_code, name: x.name })),
         ROOM: (rRes || []).map(x => ({ id: x.id, name: x.name })),
         PROGRAM: (pRes || []).map(x => ({ id: x.id, name: x.name })),
-        UNIVERSITY: [{ id: 0, name: "Entire University" }]
+
+        // Combine Global + Extracted Campuses
+        UNIVERSITY: [{ id: 0, name: "Entire University" }, ...campusTargets]
       });
 
       if (uniqueRoomTypes.length > 0) {
