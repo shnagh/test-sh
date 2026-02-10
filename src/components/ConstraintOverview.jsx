@@ -129,19 +129,19 @@ export default function ConstraintOverview() {
     if (!modalOpen) return;
 
     const targetList = targets[draft.scope.toUpperCase()] || [];
+    // Ensure strict string comparison to handle "0" vs 0
     const targetObj = targetList.find(t => String(t.id) === String(draft.target_id));
 
-    // Naming Logic: "The University" vs "The Berlin Campus"
+    // Naming Logic
     let entity = `${draft.scope} "${targetObj ? targetObj.name : 'Unknown'}"`;
     if (draft.scope === "University") {
-        if (draft.target_id === "0" || draft.target_id === 0) {
+        if (String(draft.target_id) === "0") {
             entity = "The University";
         } else {
-            // Remove "Campus: " prefix if present for cleaner sentence
             const cleanName = targetObj?.name.replace("Campus: ", "") || "Campus";
             entity = `The ${cleanName} Campus`;
         }
-    } else if (draft.target_id === "0" || draft.target_id === 0) {
+    } else if (String(draft.target_id) === "0") {
         entity = `All ${draft.scope}s`;
     }
 
@@ -171,7 +171,7 @@ export default function ConstraintOverview() {
         generatedText = `${entity} is unavailable on ${builder.day}s.`;
         break;
       case "Legal Requirement":
-        generatedText = `Lecturers must not exceed ${builder.workloadLimit} teaching units per week.`;
+        generatedText = `${entity} must not exceed ${builder.workloadLimit} teaching units per week.`;
         break;
 
       // Module / Program
@@ -213,10 +213,9 @@ export default function ConstraintOverview() {
       const uniqueRoomTypes = [...new Set((rRes || []).map(r => r.type))].filter(Boolean);
       setRoomTypes(uniqueRoomTypes);
 
-      // 2. HARDCODED LOCATIONS (Per user request)
+      // 2. HARDCODED LOCATIONS
       const staticLocations = ["Berlin", "Düsseldorf", "Munich"];
 
-      // Map locations to a pseudo-ID (10000 + index) so they fit in the 'Integer' target_id column
       const campusTargets = staticLocations.map((loc, idx) => ({
           id: 10000 + idx,
           name: `Campus: ${loc}`
@@ -270,7 +269,7 @@ export default function ConstraintOverview() {
     setEditingId(c.id);
     setDraft({
       ...c,
-      target_id: String(c.target_id || "0"),
+      target_id: String(c.target_id || "0"), // Convert DB int to string for Select
       valid_from: formatDate(c.valid_from),
       valid_to: formatDate(c.valid_to)
     });
@@ -281,7 +280,7 @@ export default function ConstraintOverview() {
     try {
       const payload = {
         ...draft,
-        target_id: Number(draft.target_id),
+        target_id: Number(draft.target_id), // Convert back to Integer for DB
         valid_from: draft.valid_from || null,
         valid_to: draft.valid_to || null,
       };
@@ -307,11 +306,8 @@ export default function ConstraintOverview() {
   };
 
   const handleCategoryChange = (newCategory) => {
-    let newTarget = draft.target_id;
-    if (newCategory === "Legal Requirement" && draft.scope === "Lecturer") {
-        newTarget = "0";
-    }
-    setDraft({ ...draft, category: newCategory, target_id: newTarget });
+    // Removed logic that forced target to "0"
+    setDraft({ ...draft, category: newCategory });
   };
 
   const toggleDay = (day) => {
@@ -320,7 +316,6 @@ export default function ConstraintOverview() {
             ? prev.selectedDays.filter(d => d !== day)
             : [...prev.selectedDays, day];
 
-          // Sort days to match week order
           const sorter = { "Monday": 1, "Tuesday": 2, "Wednesday": 3, "Thursday": 4, "Friday": 5, "Saturday": 6, "Sunday": 7 };
           days.sort((a,b) => sorter[a] - sorter[b]);
 
@@ -598,7 +593,7 @@ export default function ConstraintOverview() {
                   <label style={styles.label}>Target</label>
                   <select style={styles.select} value={draft.target_id} onChange={e => setDraft({...draft, target_id: e.target.value})}>
                     <option value="0">-- All / Global --</option>
-                    {(targets[draft.scope.toUpperCase()] || []).map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                    {(targets[draft.scope.toUpperCase()] || []).map(t => <option key={t.id} value={String(t.id)}>{t.name}</option>)}
                   </select>
                </div>
              </div>
