@@ -7,24 +7,20 @@ const styles = {
   title: { margin: 0, fontSize: "1.75rem", fontWeight: "700", color: "#0f172a" },
   subtitle: { margin: "5px 0 0 0", color: "#64748b", fontSize: "0.95rem" },
 
-  // Buttons
   btn: { padding: "10px 18px", borderRadius: "8px", border: "none", cursor: "pointer", fontSize: "0.9rem", fontWeight: "600", transition: "all 0.2s", display: "inline-flex", alignItems: "center", gap: "6px" },
   primaryBtn: { background: "#2563eb", color: "white", boxShadow: "0 2px 4px rgba(37,99,235,0.2)" },
   secondaryBtn: { background: "#f1f5f9", color: "#475569", border: "1px solid #cbd5e1" },
   deleteBtn: { background: "#fee2e2", color: "#ef4444", padding: "6px 12px", fontSize: "0.85rem" },
   editBtn: { background: "#f8fafc", color: "#475569", border: "1px solid #e2e8f0", padding: "6px 12px", fontSize: "0.85rem", marginRight: "6px" },
 
-  // Table
   tableContainer: { border: "1px solid #e2e8f0", borderRadius: "10px", overflow: "hidden", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" },
   table: { width: "100%", borderCollapse: "collapse", background: "white", fontSize: "0.95rem" },
   th: { background: "#f8fafc", padding: "14px 16px", textAlign: "left", fontSize: "0.8rem", fontWeight: "700", color: "#475569", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "1px solid #e2e8f0" },
   td: { padding: "14px 16px", borderBottom: "1px solid #f1f5f9", color: "#334155" },
 
-  // Modal
   modalOverlay: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(15, 23, 42, 0.6)", backdropFilter: "blur(2px)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000 },
   modalContent: { background: "white", padding: "32px", borderRadius: "16px", width: "700px", maxWidth: "95%", maxHeight: "90vh", overflowY: "auto", boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)" },
 
-  // Form Elements
   sectionLabel: { fontSize: "0.85rem", fontWeight: "700", color: "#64748b", marginBottom: "12px", textTransform: "uppercase", letterSpacing: "0.05em" },
   formRow: { display: "flex", gap: "20px", marginBottom: "16px" },
   formGroup: { marginBottom: "16px", flex: 1 },
@@ -32,7 +28,6 @@ const styles = {
   input: { width: "100%", padding: "10px 12px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.95rem", transition: "border-color 0.2s", boxSizing: "border-box", outline: "none" },
   select: { width: "100%", padding: "10px 12px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.95rem", background: "white", cursor: "pointer", outline: "none" },
 
-  // Builder Area
   builderBox: { background: "#f8fafc", border: "1px solid #e2e8f0", padding: "20px", borderRadius: "10px", marginBottom: "20px" },
   generatedBox: { background: "#eff6ff", border: "1px solid #dbeafe", padding: "16px", borderRadius: "8px", marginTop: "4px" },
   generatedText: { width: "100%", padding: "10px", borderRadius: "6px", border: "1px solid #bfdbfe", fontSize: "0.95rem", fontFamily: "inherit", background: "white", minHeight: "80px", resize: "vertical", color: "#1e3a8a" },
@@ -46,16 +41,20 @@ const formatDate = (isoDate) => isoDate ? isoDate.split("T")[0] : "";
 const SCOPE_CATEGORIES = {
     University: [
         { value: "University Policy", label: "University Policy (Opening Hours)" },
+        { value: "Unavailable Days", label: "University Closed (Open Days)" }, // Added for "open days"
         { value: "Academic Calendar", label: "Academic Calendar (Semester Dates)" },
+        { value: "Holiday", label: "Holiday / Break" }, // Added for "lecture-free days"
         { value: "Time Definition", label: "Time Definition (Lecture Slots)" },
         { value: "Custom", label: "Custom" }
     ],
     Lecturer: [
         { value: "Unavailable Days", label: "Unavailable Days" },
-        { value: "Legal Requirement", label: "Legal Requirement (Workload Limit)" },
+        { value: "Legal Requirement", label: "Legal Requirement (Workload)" },
         { value: "Custom", label: "Custom" }
     ],
     Module: [
+        { value: "Delivery Mode", label: "Delivery Mode (Online/Hybrid)" }, // Added
+        { value: "Duration Override", label: "Duration Override" }, // Added
         { value: "Room Requirement", label: "Room Requirement" },
         { value: "Unavailable Days", label: "Time Preference" },
         { value: "Custom", label: "Custom" }
@@ -70,6 +69,7 @@ const SCOPE_CATEGORIES = {
          { value: "Custom", label: "Custom" }
     ],
     Program: [
+        { value: "Delivery Mode", label: "Delivery Mode (Online/Hybrid)" }, // Added
         { value: "Custom", label: "Custom" }
     ]
 };
@@ -81,9 +81,7 @@ export default function ConstraintOverview() {
     UNIVERSITY: [{ id: 0, name: "Entire University" }],
   });
 
-  // Real DB Room Types
   const [roomTypes, setRoomTypes] = useState([]);
-
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
 
@@ -102,7 +100,7 @@ export default function ConstraintOverview() {
   // BUILDER STATE
   const [builder, setBuilder] = useState({
     day: "Friday",
-    roomType: "", // Will be populated from DB
+    roomType: "",
     limit: "4 hours",
     gap: "at least 1 hour",
     startTime: "08:00",
@@ -110,10 +108,13 @@ export default function ConstraintOverview() {
     slotDuration: "90",
     breakDuration: "15",
     workloadLimit: "18",
-
-    // Semester Builder
     semesterSeason: "Winter",
     semesterYear: new Date().getFullYear(),
+
+    // New Fields
+    deliveryMode: "Onsite",
+    holidayName: "Christmas Break",
+    customDuration: "180"
   });
 
   useEffect(() => { loadData(); }, []);
@@ -123,7 +124,6 @@ export default function ConstraintOverview() {
     if (!modalOpen) return;
 
     const targetList = targets[draft.scope.toUpperCase()] || [];
-    // Ensure loose equality for IDs (string vs number)
     const targetObj = targetList.find(t => String(t.id) === String(draft.target_id));
     const targetName = targetObj ? targetObj.name : "All Entities";
 
@@ -136,8 +136,9 @@ export default function ConstraintOverview() {
     let generatedText = "";
 
     switch (draft.category) {
+      // Existing
       case "Unavailable Days":
-        generatedText = `${entity} is unavailable on ${builder.day}s.`;
+        generatedText = `${entity} is unavailable/closed on ${builder.day}s.`;
         break;
       case "Room Requirement":
         generatedText = `${entity} requires a room of type '${builder.roomType}'.`;
@@ -157,8 +158,19 @@ export default function ConstraintOverview() {
       case "Legal Requirement":
         generatedText = `Lecturers must not exceed ${builder.workloadLimit} teaching units per week.`;
         break;
+
+      // NEW CASES
+      case "Delivery Mode":
+        generatedText = `${entity} must be conducted ${builder.deliveryMode}.`;
+        break;
+      case "Holiday":
+        generatedText = `No lectures allowed during '${builder.holidayName}' (from ${draft.valid_from || '[Date]'} to ${draft.valid_to || '[Date]'}).`;
+        break;
+      case "Duration Override":
+        generatedText = `${entity} has a specific duration of ${builder.customDuration} minutes.`;
+        break;
+
       default:
-        // Don't overwrite if manual
         return;
     }
 
@@ -182,7 +194,6 @@ export default function ConstraintOverview() {
 
       setConstraints(cRes || []);
 
-      // Extract unique room types from the database
       const uniqueRoomTypes = [...new Set((rRes || []).map(r => r.type))].filter(Boolean);
       setRoomTypes(uniqueRoomTypes);
 
@@ -195,7 +206,6 @@ export default function ConstraintOverview() {
         UNIVERSITY: [{ id: 0, name: "Entire University" }]
       });
 
-      // Set default room type if available
       if (uniqueRoomTypes.length > 0) {
         setBuilder(prev => ({ ...prev, roomType: uniqueRoomTypes[0] }));
       }
@@ -209,7 +219,6 @@ export default function ConstraintOverview() {
       name: "", category: "University Policy", scope: "University", target_id: "0",
       valid_from: "", valid_to: "", rule_text: "", is_enabled: true
     });
-    // Reset builder defaults
     setBuilder(prev => ({
         ...prev,
         day: "Friday",
@@ -221,7 +230,10 @@ export default function ConstraintOverview() {
         semesterYear: new Date().getFullYear(),
         slotDuration: "90",
         breakDuration: "15",
-        workloadLimit: "18"
+        workloadLimit: "18",
+        deliveryMode: "Onsite",
+        holidayName: "Public Holiday",
+        customDuration: "180"
     }));
     setModalOpen(true);
   }
@@ -254,7 +266,6 @@ export default function ConstraintOverview() {
     } catch (e) { alert("Error saving constraint."); }
   }
 
-  // --- Change Scope -> Reset Category ---
   const handleScopeChange = (newScope) => {
       const allowedCategories = SCOPE_CATEGORIES[newScope] || SCOPE_CATEGORIES["University"];
       const defaultCategory = allowedCategories[0].value;
@@ -269,7 +280,6 @@ export default function ConstraintOverview() {
 
   const handleCategoryChange = (newCategory) => {
     let newTarget = draft.target_id;
-    // Smart Defaults
     if (newCategory === "Legal Requirement" && draft.scope === "Lecturer") {
         newTarget = "0";
     }
@@ -295,13 +305,21 @@ export default function ConstraintOverview() {
                     <option value="Summer">Summer</option>
                 </select>
                 <select style={{...styles.select, width:'auto'}} value={builder.semesterYear} onChange={e => setBuilder({...builder, semesterYear: e.target.value})}>
-                    {/* Simple year picker: Current year +/- 2 */}
                     {[0,1,2,3].map(i => {
                         const y = new Date().getFullYear() + i;
                         return <option key={y} value={y}>{y}</option>;
                     })}
                 </select>
                 <span style={{fontSize:'0.85rem', color:'#64748b', fontStyle:'italic'}}>(Set actual start/end dates below)</span>
+            </div>
+        );
+    }
+    // NEW: Holidays / Breaks
+    if (draft.category === "Holiday") {
+        return (
+            <div style={{display:'flex', gap:'12px', alignItems:'center'}}>
+                <input style={{...styles.input, flex:1}} placeholder="Holiday Name (e.g. Christmas)" value={builder.holidayName} onChange={e => setBuilder({...builder, holidayName: e.target.value})} />
+                <span style={{fontSize:'0.85rem', color:'#64748b', fontStyle:'italic'}}>(Set dates below)</span>
             </div>
         );
     }
@@ -336,11 +354,34 @@ export default function ConstraintOverview() {
             </div>
         );
     }
+    // NEW: Delivery Mode (Online/Hybrid)
+    if (draft.category === "Delivery Mode") {
+        return (
+            <div style={{display:'flex', gap:'12px', alignItems:'center'}}>
+                <span>Mode:</span>
+                <select style={{...styles.select, width:'auto'}} value={builder.deliveryMode} onChange={e => setBuilder({...builder, deliveryMode: e.target.value})}>
+                    <option value="Onsite">Onsite (In Person)</option>
+                    <option value="Online">Online (Remote)</option>
+                    <option value="Hybrid">Hybrid</option>
+                </select>
+            </div>
+        );
+    }
+    // NEW: Duration Override
+    if (draft.category === "Duration Override") {
+        return (
+            <div style={{display:'flex', gap:'12px', alignItems:'center'}}>
+                <span>Specific Duration:</span>
+                <input type="number" style={{...styles.input, width:'100px'}} value={builder.customDuration} onChange={e => setBuilder({...builder, customDuration: e.target.value})} />
+                <span>minutes</span>
+            </div>
+        );
+    }
     if (draft.category === "Unavailable Days") {
         return (
             <div style={{display:'flex', gap:'12px', alignItems:'center'}}>
                 <select style={{...styles.select, width:'auto'}} value={builder.day} onChange={e => setBuilder({...builder, day: e.target.value})}>
-                    {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"].map(d => <option key={d} value={d}>{d}</option>)}
+                    {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map(d => <option key={d} value={d}>{d}</option>)}
                 </select>
                 <span>is unavailable / closed.</span>
             </div>
