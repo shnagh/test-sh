@@ -10,15 +10,12 @@ import RoomOverview from "./components/RoomOverview";
 import GroupOverview from "./components/GroupOverview";
 import ConstraintOverview from "./components/ConstraintOverview";
 import AvailabilityOverview from "./components/AvailabilityOverview";
+import SemesterManager from "./components/SemesterManager"; // ✅ NEW
 
 function App() {
   const [activeTab, setActiveTab] = useState("programs");
-
-  // ✅ FIX: Removed 'setToken' causing build error (unused)
-  // We only read the token here; writing happens in Layout.jsx + Reload
   const [token] = useState(localStorage.getItem("token"));
   const [currentUserRole, setCurrentUserRole] = useState(localStorage.getItem("userRole") || "Guest");
-
   const [navData, setNavData] = useState(null);
 
   const handleNavigate = (tab, data = null) => {
@@ -26,8 +23,6 @@ function App() {
     setNavData(data);
   };
 
-  // If no token is present, we show a "Welcome" screen instead of the data components.
-  // This prevents the 401 -> Reload loop.
   const renderContent = () => {
     if (!token) {
       return (
@@ -38,7 +33,6 @@ function App() {
       );
     }
 
-    // Pass role to all components
     const commonProps = { currentUserRole, onNavigate: handleNavigate };
 
     switch (activeTab) {
@@ -56,6 +50,8 @@ function App() {
         return <ConstraintOverview {...commonProps} />;
       case "availabilities":
         return <AvailabilityOverview {...commonProps} />;
+      case "semesters": // ✅ NEW
+        return <SemesterManager {...commonProps} />;
       default:
         return <ProgramOverview {...commonProps} />;
     }
