@@ -17,6 +17,7 @@ from .routers.groups import router as groups_router
 from .routers.rooms import router as rooms_router
 from .routers.constraints import router as constraints_router
 from .routers.availabilities import router as availabilities_router
+from .routers.semesters import router as semesters_router  # ✅ NEW
 
 # Crear tablas
 try:
@@ -39,10 +40,8 @@ app.add_middleware(
 def root():
     return {"message": "Backend Online"}
 
-# ✅ RUTA NUEVA DE DIAGNÓSTICO
 @app.get("/version")
 def check_version():
-    # Si ves este mensaje en el navegador, el deploy FUNCIONÓ.
     return {
         "status": "NUEVA VERSION DESPLEGADA",
         "timestamp": str(datetime.datetime.now()),
@@ -60,3 +59,4 @@ app.include_router(groups_router)
 app.include_router(rooms_router)
 app.include_router(constraints_router)
 app.include_router(availabilities_router)
+app.include_router(semesters_router)

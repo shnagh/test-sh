@@ -19,7 +19,6 @@ lecturer_modules = Table(
     Column("module_code", String, ForeignKey("modules.module_code", ondelete="CASCADE"), primary_key=True),
 )
 
-
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
@@ -29,7 +28,6 @@ class User(Base):
     lecturer_id = Column(Integer, ForeignKey("lecturers.ID"), nullable=True)
 
     lecturer_profile = relationship("Lecturer")
-
 
 class Lecturer(Base):
     __tablename__ = "lecturers"
@@ -44,7 +42,6 @@ class Lecturer(Base):
     location = Column(String(200), nullable=True)
     teaching_load = Column(String(100), nullable=True)
     modules = relationship("Module", secondary=lecturer_modules, back_populates="lecturers")
-
 
 class StudyProgram(Base):
     __tablename__ = "study_programs"
@@ -61,7 +58,6 @@ class StudyProgram(Base):
 
     head_lecturer = relationship("Lecturer")
 
-
 class Module(Base):
     __tablename__ = "modules"
     module_code = Column(String, primary_key=True, index=True)
@@ -76,7 +72,6 @@ class Module(Base):
     specializations = relationship("Specialization", secondary=module_specializations, back_populates="modules")
     lecturers = relationship("Lecturer", secondary=lecturer_modules, back_populates="modules")
 
-
 class Specialization(Base):
     __tablename__ = "specializations"
     id = Column(Integer, primary_key=True, index=True)
@@ -89,7 +84,6 @@ class Specialization(Base):
 
     modules = relationship("Module", secondary=module_specializations, back_populates="specializations")
 
-
 class Group(Base):
     __tablename__ = "groups"
     id = Column(Integer, primary_key=True, index=True)
@@ -99,7 +93,6 @@ class Group(Base):
     email = Column("Email", String(200), nullable=True)
     program = Column("Program", String, nullable=True)
     parent_group = Column("Parent_Group", String, nullable=True)
-
 
 class Room(Base):
     __tablename__ = "rooms"
@@ -111,43 +104,30 @@ class Room(Base):
     equipment = Column("Equipment", String, nullable=True)
     location = Column(String(200), nullable=True)
 
-
 class LecturerAvailability(Base):
     __tablename__ = "lecturer_availabilities"
     id = Column(Integer, primary_key=True, index=True)
     lecturer_id = Column(Integer, ForeignKey("lecturers.ID", ondelete="CASCADE"), unique=True, nullable=False)
     schedule_data = Column(JSON, default={}, nullable=False)
 
-
-# -------------------------------------------------------------------
-#  UPDATED SCHEDULER MODELS
-# -------------------------------------------------------------------
-
 class SchedulerConstraint(Base):
     __tablename__ = "scheduler_constraints"
-
     id = Column(Integer, primary_key=True, index=True)
-
-    # Basic Info
-    name = Column(String, nullable=False)  # Internal Title
+    name = Column(String, nullable=False)
     category = Column(String, default="General")
-
-    # The Natural Language Instruction
     rule_text = Column(Text, nullable=False)
-
-    # Context / Scope
     scope = Column(String(20), nullable=False)
-
-    # ✅ CHANGED: Now String to support Module Codes (e.g., "CS-101")
     target_id = Column(String, nullable=True, default="0")
-
-    # Validity Dates (Optional)
     valid_from = Column(Date, nullable=True)
     valid_to = Column(Date, nullable=True)
-
-    # Status
     is_enabled = Column(Boolean, default=True, nullable=False)
-
-    # Timestamps
     created_at = Column(TIMESTAMP, server_default=func.now(), nullable=False)
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now(), nullable=False)
+
+class Semester(Base):
+    __tablename__ = "semesters"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    acronym = Column(String, nullable=False)
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date, nullable=False)

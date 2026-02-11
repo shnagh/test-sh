@@ -20,17 +20,14 @@ async function request(path, options = {}) {
   }
 
   const res = await fetch(url, { ...options, headers });
-
   const text = await res.text().catch(() => "");
 
   if (!res.ok) {
-    // If token expired (401), auto-logout
     if (res.status === 401) {
       localStorage.removeItem("token");
       localStorage.removeItem("userRole");
-      window.location.href = "/"; // Force reload to login
+      window.location.href = "/";
     }
-
     try {
       const errJson = JSON.parse(text);
       throw new Error(errJson.detail || `${res.status} ${res.statusText}`);
@@ -45,12 +42,7 @@ async function request(path, options = {}) {
 
 const api = {
   // --- AUTH ---
-  login(email, password) {
-    return request("/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ email, password })
-    });
-  },
+  login(email, password) { return request("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) }); },
 
   // ---------- PROGRAMS ----------
   getPrograms() { return request("/study-programs/"); },
@@ -76,16 +68,8 @@ const api = {
   updateLecturer(id, payload) { return request(`/lecturers/${id}`, { method: "PUT", body: JSON.stringify(payload) }); },
   deleteLecturer(id) { return request(`/lecturers/${id}`, { method: "DELETE" }); },
 
-  // ✅ LECTURER MODULE ASSIGNMENT
-  getLecturerModules(id) {
-    return request(`/lecturers/${id}/modules`);
-  },
-  setLecturerModules(id, module_codes) {
-    return request(`/lecturers/${id}/modules`, {
-      method: "PUT",
-      body: JSON.stringify({ module_codes })
-    });
-  },
+  getLecturerModules(id) { return request(`/lecturers/${id}/modules`); },
+  setLecturerModules(id, module_codes) { return request(`/lecturers/${id}/modules`, { method: "PUT", body: JSON.stringify({ module_codes }) }); },
 
   // ---------- GROUPS ----------
   getGroups() { return request("/groups/"); },
@@ -100,7 +84,6 @@ const api = {
   deleteRoom(id) { return request(`/rooms/${id}`, { method: "DELETE" }); },
 
   // ---------- SCHEDULER CONSTRAINTS ----------
-
   getConstraints() { return request("/scheduler-constraints/"); },
   createConstraint(payload) { return request("/scheduler-constraints/", { method: "POST", body: JSON.stringify(payload) }); },
   updateConstraint(id, payload) { return request(`/scheduler-constraints/${id}`, { method: "PUT", body: JSON.stringify(payload) }); },
@@ -110,6 +93,11 @@ const api = {
   getAvailabilities() { return request("/availabilities/"); },
   updateLecturerWeek(payload) { return request("/availabilities/update", { method: "POST", body: JSON.stringify(payload) }); },
   deleteLecturerAvailability(lecturerId) { return request(`/availabilities/lecturer/${lecturerId}`, { method: "DELETE" }); },
+
+  //semesters
+  getSemesters() { return request("/semesters/"); },
+  createSemester(payload) { return request("/semesters/", { method: "POST", body: JSON.stringify(payload) }); },
+  deleteSemester(id) { return request(`/semesters/${id}`, { method: "DELETE" }); },
 };
 
 export default api;

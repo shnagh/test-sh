@@ -3,23 +3,15 @@ import api from "./api";
 import "./App.css";
 
 const Layout = ({ activeTab, setActiveTab, children, currentUserRole, setCurrentUserRole }) => {
-  // Aseguramos que el rol siempre se lea en minúsculas y limpio
   const role = (currentUserRole || "").trim().toLowerCase();
-
-  // ✅ Variable para saber si es estudiante (y ocultar cosas grandes)
   const isStudent = role === "student";
 
   const NavLink = ({ id, icon, label, rolesAllowed = [] }) => {
     const normalizedAllowed = rolesAllowed.map(r => r.toLowerCase());
+    if (normalizedAllowed.length > 0 && !normalizedAllowed.includes(role)) return null;
 
-    if (normalizedAllowed.length > 0 && !normalizedAllowed.includes(role)) {
-      return null;
-    }
     return (
-      <div
-        className={`nav-item ${activeTab === id ? "active" : ""}`}
-        onClick={() => setActiveTab(id)}
-      >
+      <div className={`nav-item ${activeTab === id ? "active" : ""}`} onClick={() => setActiveTab(id)}>
         <span style={{ fontSize: "1.2em" }}>{icon}</span>
         <span>{label}</span>
       </div>
@@ -43,25 +35,17 @@ const Layout = ({ activeTab, setActiveTab, children, currentUserRole, setCurrent
 
     try {
       const data = await api.login(email, password);
-
       const normalizedBackendRole = String(data.role || "").trim().toLowerCase();
 
       localStorage.setItem("token", data.access_token);
       localStorage.setItem("userRole", normalizedBackendRole);
-
-      if (data.lecturer_id) {
-        localStorage.setItem("lecturerId", String(data.lecturer_id));
-      } else {
-        localStorage.removeItem("lecturerId");
-      }
+      if (data.lecturer_id) localStorage.setItem("lecturerId", String(data.lecturer_id));
+      else localStorage.removeItem("lecturerId");
 
       setCurrentUserRole(normalizedBackendRole);
-
-      // Avisamos del cambio de rol
       window.dispatchEvent(new Event("role-changed"));
 
     } catch (err) {
-      console.error(err);
       alert("Login Error: " + err.message);
     }
   };
@@ -79,24 +63,22 @@ const Layout = ({ activeTab, setActiveTab, children, currentUserRole, setCurrent
 
         <div className="sidebar-nav">
           <div className="nav-section-title">Curriculum</div>
+          {/* ✅ NEW: Semesters Link */}
+          <NavLink id="semesters" label="Semesters" rolesAllowed={["admin", "pm", "hosp", "lecturer", "student"]} />
           <NavLink id="programs" label="Study Programs" rolesAllowed={["admin", "pm", "hosp", "lecturer", "student"]} />
           <NavLink id="modules" label="Modules" rolesAllowed={["admin", "pm", "hosp", "lecturer", "student"]} />
 
           <div className="nav-section-title">People & Groups</div>
-          {/* ✅ LECTURERS: Quitamos "student" de la lista permitida */}
           <NavLink id="lecturers" label="Lecturers" rolesAllowed={["admin", "pm", "hosp", "lecturer"]} />
           <NavLink id="groups" label="Student Groups" rolesAllowed={["admin", "pm", "hosp", "lecturer", "student"]} />
 
-          {/* ✅ FACILITIES: Ocultamos toda la sección si es Estudiante */}
           {!isStudent && (
             <>
               <div className="nav-section-title">Facilities</div>
-             <NavLink id="rooms" label="Rooms" rolesAllowed={["pm"]} />
-
+              <NavLink id="rooms" label="Rooms" rolesAllowed={["pm"]} />
             </>
           )}
 
-          {/* ✅ PLANNING LOGIC: Ocultamos toda la sección si es Estudiante */}
           {!isStudent && (
             <>
               <div className="nav-section-title">Planning Logic</div>
