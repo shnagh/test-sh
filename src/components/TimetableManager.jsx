@@ -241,7 +241,7 @@ export default function TimetableManager() {
               color: semesterType === "Winter" ? "white" : "#2b4a8e",
               fontWeight: "bold", cursor: "pointer"
             }}
-          >❄️ Winter Semester (Oct - Feb)</button>
+          > Winter Semester (Oct - Feb)</button>
 
           <button
             onClick={() => setSemesterType("Summer")}
@@ -251,7 +251,7 @@ export default function TimetableManager() {
               color: semesterType === "Summer" ? "white" : "#f59f00",
               fontWeight: "bold", cursor: "pointer"
             }}
-          >☀️ Summer Semester (Mar - Aug)</button>
+          > Summer Semester (Mar - Aug)</button>
         </div>
 
         {/* TABLA HORIZONTAL DE MESES */}
@@ -463,7 +463,7 @@ export default function TimetableManager() {
 
       {loading ? <p>Loading...</p> : (
         isListView ? renderListView() : (
-          viewMode === "Semester" ? renderSemesterPlan() : // ✅ VISTA DINÁMICA WINTER/SUMMER
+          viewMode === "Semester" ? renderSemesterPlan() :
           viewMode === "Month" ? renderMonthView() :
           renderGridView()
         )
