@@ -146,6 +146,15 @@ export default function ModuleOverview({ onNavigate }) {
     }
   };
 
+  // ✅ SORTED & FORMATTED PROGRAMS FOR DROPDOWNS
+  const sortedPrograms = useMemo(() => {
+    return [...programs].sort((a, b) => {
+      const nameA = `[${a.degree_type || a.level || '-'}] ${a.name}`;
+      const nameB = `[${b.degree_type || b.level || '-'}] ${b.name}`;
+      return nameA.localeCompare(nameB);
+    });
+  }, [programs]);
+
   const filteredModules = useMemo(() => {
     const q = query.trim().toLowerCase();
 
@@ -153,11 +162,10 @@ export default function ModuleOverview({ onNavigate }) {
       // 1. Search Query
       const matchesSearch = (m?.name || "").toLowerCase().includes(q) || (m?.module_code || "").toLowerCase().includes(q);
 
-      // 2. Program Filter
+      // 2. Program Filter (Removed GLOBAL option)
       let matchesProgram = true;
       if (filterProgram !== "ALL") {
-        if (filterProgram === "GLOBAL") matchesProgram = m.program_id === null;
-        else matchesProgram = String(m.program_id) === filterProgram;
+        matchesProgram = String(m.program_id) === filterProgram;
       }
 
       // 3. Assessment Filter
@@ -394,10 +402,10 @@ export default function ModuleOverview({ onNavigate }) {
             onChange={(e) => setFilterProgram(e.target.value)}
           >
             <option value="ALL">All Programs</option>
-            <option value="GLOBAL">Global (No Program)</option>
-            {programs.map(p => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))}
+            {sortedPrograms.map(p => {
+              const displayName = `[${p.degree_type || p.level || '-'}] ${p.name}`;
+              return <option key={p.id} value={p.id}>{displayName}</option>;
+            })}
           </select>
 
           <select
@@ -439,7 +447,6 @@ export default function ModuleOverview({ onNavigate }) {
         <table style={styles.table}>
             <thead style={{background:'#f8fafc'}}>
               <tr>
-                {/* ✅ WIDTHS ADJUSTED SLIGHTLY TO FIT "SEMESTER" */}
                 <th style={{...styles.th, width: '10%'}}>Code</th>
                 <th style={{...styles.th, width: '18%'}}>Module Name</th>
                 <th style={{...styles.th, width: '15%'}}>Program</th>
@@ -474,14 +481,13 @@ export default function ModuleOverview({ onNavigate }) {
                             style={styles.programLink}
                             onClick={(e) => { e.stopPropagation(); handleProgramClick(prog.id); }}
                           >
-                            {prog.name}
+                            {`[${prog.degree_type || prog.level || '-'}] ${prog.name}`}
                           </span>
                         ) : (
                           <span style={{ fontStyle: 'italic', color: '#64748b' }}>Global</span>
                         )}
                       </td>
                       <td style={{...styles.td, textAlign: "center"}}>{m.semester}</td>
-                      {/* ✅ BLACK TEXT FOR CATEGORY, NO BACKGROUND */}
                       <td style={{...styles.td, textAlign: "center", fontWeight: "600", color: "#000"}}>
                         {m.category}
                       </td>
@@ -686,7 +692,10 @@ export default function ModuleOverview({ onNavigate }) {
                 onChange={(e) => setDraft({ ...draft, program_id: e.target.value })}
               >
                 <option value="">-- None / Global Module --</option>
-                {programs.map(p => (<option key={p.id} value={p.id}>{p.name} ({p.level})</option>))}
+                {sortedPrograms.map(p => {
+                  const displayName = `[${p.degree_type || p.level || '-'}] ${p.name}`;
+                  return <option key={p.id} value={p.id}>{displayName}</option>;
+                })}
               </select>
             </div>
 
