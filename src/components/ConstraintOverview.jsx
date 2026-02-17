@@ -39,25 +39,27 @@ const styles = {
 };
 
 const formatDate = (isoDate) => isoDate ? isoDate.split("T")[0] : "";
+const formatGermanDate = (isoDate) => {
+    if (!isoDate) return "-";
+    const d = new Date(isoDate);
+    if (isNaN(d.getTime())) return "-";
+    return d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+};
 
 const SCOPE_CATEGORIES = {
     University: [
         { value: "University Open Days", label: "University Open Days" },
         { value: "University Policy", label: "University Policy (Opening Hours)" },
-        { value: "Academic Calendar", label: "Academic Calendar (Semester Dates)" },
         { value: "Holiday", label: "Holiday / Break" },
         { value: "Time Definition", label: "Time Definition (Lecture Slots)" },
         { value: "Custom", label: "Custom" }
     ],
     Lecturer: [
-        { value: "Unavailable Days", label: "Unavailable Days" },
-        { value: "Legal Requirement", label: "Legal Requirement (Workload)" },
         { value: "Custom", label: "Custom" }
     ],
     Module: [
         { value: "Delivery Mode", label: "Delivery Mode" },
         { value: "Duration", label: "Duration" },
-        { value: "Room Requirement", label: "Room Requirement" },
         { value: "Custom", label: "Custom" }
     ],
     Group: [
@@ -82,7 +84,6 @@ export default function ConstraintOverview() {
     UNIVERSITY: [{ id: "0", name: "Entire University" }],
   });
 
-  const [roomTypes, setRoomTypes] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
 
@@ -101,7 +102,6 @@ export default function ConstraintOverview() {
   // BUILDER STATE
   const [builder, setBuilder] = useState({
     day: "Friday",
-    roomType: "",
     limit: "4 hours",
     gap: "at least 1 hour",
     startTime: "08:00",
@@ -152,22 +152,11 @@ export default function ConstraintOverview() {
       case "University Policy":
         generatedText = `${entity} is open from ${builder.startTime} to ${builder.endTime}.`;
         break;
-      case "Academic Calendar":
-        generatedText = `${builder.semesterSeason} Semester ${builder.semesterYear} starts on ${draft.valid_from || '[Date]'} and ends on ${draft.valid_to || '[Date]'}.`;
-        break;
       case "Holiday":
         generatedText = `Holiday '${builder.holidayName}' is from ${draft.valid_from || '[Date]'} to ${draft.valid_to || '[Date]'}.`;
         break;
       case "Time Definition":
         generatedText = `Standard lecture slots are ${builder.slotDuration} minutes long with a ${builder.breakDuration} minute break.`;
-        break;
-
-      // Lecturer
-      case "Unavailable Days":
-        generatedText = `${entity} is unavailable on ${builder.day}s.`;
-        break;
-      case "Legal Requirement":
-        generatedText = `${entity} must not exceed ${builder.workloadLimit} teaching units per week.`;
         break;
 
       // Module / Program
@@ -177,19 +166,29 @@ export default function ConstraintOverview() {
       case "Duration":
         generatedText = `${entity} has a specific duration of ${builder.customDuration} minutes.`;
         break;
-      case "Room Requirement":
-        generatedText = `${entity} requires a room of type '${builder.roomType}'.`;
+      case "Unavailable Days":
+        generatedText = `${entity} is unavailable on ${builder.day}s.`;
         break;
 
       default:
-        return;
+        // Do not overwrite Custom if it has content
+        if (draft.category === "Custom") {
+            if (!draft.rule_text) {
+                generatedText = "Enter custom rule description here.";
+            } else {
+                return;
+            }
+        }
+        break;
     }
 
-    setDraft(prev => ({ ...prev, rule_text: generatedText }));
+    if (generatedText && generatedText !== draft.rule_text) {
+        setDraft(prev => ({ ...prev, rule_text: generatedText }));
+    }
 
   }, [
     draft.category, draft.scope, draft.target_id, draft.valid_from, draft.valid_to,
-    builder, modalOpen, targets
+    builder, modalOpen, targets, draft.rule_text
   ]);
 
   async function loadData() {
@@ -205,9 +204,6 @@ export default function ConstraintOverview() {
 
       setConstraints(cRes || []);
 
-      const uniqueRoomTypes = [...new Set((rRes || []).map(r => r.type))].filter(Boolean);
-      setRoomTypes(uniqueRoomTypes);
-
       // HARDCODED LOCATIONS
       const staticLocations = ["Berlin", "Düsseldorf", "Munich"];
       const campusTargets = staticLocations.map((loc, idx) => ({
@@ -215,19 +211,49 @@ export default function ConstraintOverview() {
           name: `Campus: ${loc}`
       }));
 
+      // --- Sort & Format Programs ---
+      const progs = pRes || [];
+      const programTargets = progs.map(p => ({
+          id: String(p.id),
+          name: `[${p.degree_type || p.level || '-'}] ${p.name}`,
+          rawName: p.name
+      })).sort((a, b) => a.rawName.localeCompare(b.rawName))
+        .map(t => ({ id: t.id, name: t.name }));
+
+      // --- Sort & Format Modules ---
+      const moduleTargets = (mRes || []).map(m => {
+          const prog = progs.find(p => p.id === m.program_id);
+          const progName = prog ? prog.name : "Unassigned";
+          return {
+              id: String(m.module_code),
+              name: `[${progName}] ${m.module_code} - ${m.name}`,
+              progName,
+              code: m.module_code
+          };
+      }).sort((a, b) => {
+          if (a.progName === b.progName) return a.code.localeCompare(b.code, undefined, {numeric: true});
+          return a.progName.localeCompare(b.progName);
+      }).map(t => ({ id: t.id, name: t.name }));
+
+      // --- Sort & Format Rooms ---
+      const roomTargets = (rRes || []).map(r => ({
+          id: String(r.id),
+          name: r.location ? `${r.location} - ${r.name}` : r.name,
+          location: r.location || "Unknown",
+          rawName: r.name
+      })).sort((a, b) => {
+          if (a.location === b.location) return a.rawName.localeCompare(b.rawName, undefined, {numeric: true});
+          return a.location.localeCompare(b.location);
+      }).map(t => ({ id: t.id, name: t.name }));
+
       setTargets({
-        // ALL IDs must be strings now
-        LECTURER: (lRes || []).map(x => ({ id: String(x.id), name: `${x.first_name} ${x.last_name}` })),
-        GROUP: (gRes || []).map(x => ({ id: String(x.id), name: x.name })),
-        MODULE: (mRes || []).map(x => ({ id: String(x.module_code), name: x.name })),
-        ROOM: (rRes || []).map(x => ({ id: String(x.id), name: x.name })),
-        PROGRAM: (pRes || []).map(x => ({ id: String(x.id), name: x.name })),
+        LECTURER: (lRes || []).map(x => ({ id: String(x.id), name: `${x.first_name} ${x.last_name}` })).sort((a,b) => a.name.localeCompare(b.name)),
+        GROUP: (gRes || []).map(x => ({ id: String(x.id), name: x.name })).sort((a,b) => a.name.localeCompare(b.name)),
+        MODULE: moduleTargets,
+        ROOM: roomTargets,
+        PROGRAM: programTargets,
         UNIVERSITY: [{ id: "0", name: "Entire University" }, ...campusTargets]
       });
-
-      if (uniqueRoomTypes.length > 0) {
-        setBuilder(prev => ({ ...prev, roomType: uniqueRoomTypes[0] }));
-      }
 
     } catch (e) { console.error("Load Error", e); }
   }
@@ -261,8 +287,12 @@ export default function ConstraintOverview() {
   function openEdit(c) {
     setEditingId(c.id);
     setDraft({
-      ...c,
+      name: c.name,
+      category: c.category,
+      scope: c.scope,
       target_id: String(c.target_id || "0"),
+      rule_text: c.rule_text,
+      is_enabled: c.is_enabled,
       valid_from: formatDate(c.valid_from),
       valid_to: formatDate(c.valid_to)
     });
@@ -271,12 +301,16 @@ export default function ConstraintOverview() {
 
   async function save() {
     try {
+      // ✅ SANITIZATION: Send explicit fields only to avoid DB errors when saving existing models
       const payload = {
-        ...draft,
-        // ✅ CRITICAL FIX: Send ID as String, do NOT convert to Number
+        name: draft.name,
+        category: draft.category,
+        scope: draft.scope,
         target_id: String(draft.target_id),
+        rule_text: draft.rule_text,
         valid_from: draft.valid_from || null,
         valid_to: draft.valid_to || null,
+        is_enabled: draft.is_enabled
       };
 
       if (editingId) await api.updateConstraint(editingId, payload);
@@ -348,35 +382,6 @@ export default function ConstraintOverview() {
         );
     }
 
-    if (draft.category === "Academic Calendar") {
-        return (
-            <div>
-                <div style={{display:'flex', gap:'12px', alignItems:'center', marginBottom:'10px'}}>
-                    <select style={{...styles.select, width:'auto'}} value={builder.semesterSeason} onChange={e => setBuilder({...builder, semesterSeason: e.target.value})}>
-                        <option value="Winter">Winter</option>
-                        <option value="Summer">Summer</option>
-                    </select>
-                    <select style={{...styles.select, width:'auto'}} value={builder.semesterYear} onChange={e => setBuilder({...builder, semesterYear: e.target.value})}>
-                        {[0,1,2,3].map(i => {
-                            const y = new Date().getFullYear() + i;
-                            return <option key={y} value={y}>{y}</option>;
-                        })}
-                    </select>
-                </div>
-                <div style={styles.formRow}>
-                   <div style={{flex:1}}>
-                     <label style={styles.label}>Start Date</label>
-                     <input type="date" style={styles.input} value={draft.valid_from} onChange={e => setDraft({...draft, valid_from: e.target.value})} />
-                   </div>
-                   <div style={{flex:1}}>
-                     <label style={styles.label}>End Date</label>
-                     <input type="date" style={styles.input} value={draft.valid_to} onChange={e => setDraft({...draft, valid_to: e.target.value})} />
-                   </div>
-                </div>
-            </div>
-        );
-    }
-
     if (draft.category === "Holiday") {
         return (
             <div>
@@ -420,15 +425,7 @@ export default function ConstraintOverview() {
             </div>
         );
     }
-    if (draft.category === "Legal Requirement") {
-        return (
-            <div style={{display:'flex', gap:'12px', alignItems:'center'}}>
-                <span>Max Weekly Workload:</span>
-                <input type="number" style={{...styles.input, width:'100px'}} value={builder.workloadLimit} onChange={e => setBuilder({...builder, workloadLimit: e.target.value})} />
-                <span>Teaching Units (UE)</span>
-            </div>
-        );
-    }
+
     if (draft.category === "Delivery Mode") {
         return (
             <div style={{display:'flex', gap:'12px', alignItems:'center'}}>
@@ -441,6 +438,7 @@ export default function ConstraintOverview() {
             </div>
         );
     }
+
     if (draft.category === "Duration") {
         return (
             <div style={{display:'flex', gap:'12px', alignItems:'center'}}>
@@ -450,6 +448,7 @@ export default function ConstraintOverview() {
             </div>
         );
     }
+
     if (draft.category === "Unavailable Days") {
         return (
             <div style={{display:'flex', gap:'12px', alignItems:'center'}}>
@@ -460,26 +459,12 @@ export default function ConstraintOverview() {
             </div>
         );
     }
-    if (draft.category === "Room Requirement") {
-        return (
-            <div style={{display:'flex', gap:'12px', alignItems:'center'}}>
-                <span>Requires a room of type:</span>
-                <select style={{...styles.select, width:'auto'}} value={builder.roomType} onChange={e => setBuilder({...builder, roomType: e.target.value})}>
-                    {roomTypes.length > 0 ? (
-                        roomTypes.map(r => <option key={r} value={r}>{r}</option>)
-                    ) : (
-                        <option disabled>No room types found</option>
-                    )}
-                </select>
-            </div>
-        );
-    }
 
     return <div style={{color:'#64748b', fontStyle:'italic'}}>Use the text box below to describe a custom rule.</div>;
   };
 
   const currentCategories = SCOPE_CATEGORIES[draft.scope] || SCOPE_CATEGORIES["University"];
-  const showGenericValidity = !["Academic Calendar", "Holiday"].includes(draft.category);
+  const showGenericValidity = !["Holiday"].includes(draft.category);
 
   return (
     <div style={styles.container}>
@@ -498,13 +483,14 @@ export default function ConstraintOverview() {
                 <th style={styles.th}>Rule Name</th>
                 <th style={styles.th}>Scope & Target</th>
                 <th style={styles.th}>Description</th>
+                <th style={styles.th}>Date of Creation</th>
                 <th style={styles.th}>Status</th>
                 <th style={styles.th}>Action</th>
             </tr>
             </thead>
             <tbody>
             {constraints.length === 0 && (
-                <tr><td colSpan="5" style={{...styles.td, textAlign:'center', color:'#94a3b8', padding:'30px'}}>No rules defined yet.</td></tr>
+                <tr><td colSpan="6" style={{...styles.td, textAlign:'center', color:'#94a3b8', padding:'30px'}}>No rules defined yet.</td></tr>
             )}
             {constraints.map(c => {
                 const targetName = (targets[c.scope?.toUpperCase()] || []).find(t => String(t.id) === String(c.target_id))?.name || "All";
@@ -529,6 +515,11 @@ export default function ConstraintOverview() {
                                 📅 {formatDate(c.valid_from)} → {formatDate(c.valid_to)}
                             </div>
                         )}
+                    </td>
+                    <td style={styles.td}>
+                        <div style={{fontSize:'0.85rem', color:'#64748b'}}>
+                            {formatGermanDate(c.created_at || c.createdAt)}
+                        </div>
                     </td>
                     <td style={styles.td}>
                         <span style={{
@@ -620,7 +611,7 @@ export default function ConstraintOverview() {
                 </div>
              </div>
 
-             {/* 5. GENERIC VALIDITY (Only shown if NOT Academic Calendar/Holiday) */}
+             {/* 5. GENERIC VALIDITY (Only shown if NOT Holiday) */}
              {showGenericValidity && (
                  <div style={{marginTop:'20px', borderTop:'1px solid #e2e8f0', paddingTop:'15px'}}>
                      <div style={styles.sectionLabel}>Validity Window (Optional)</div>
