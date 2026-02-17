@@ -25,7 +25,6 @@ const styles = {
 
   tableContainer: { border: "1px solid #e2e8f0", borderRadius: "10px", overflow: "hidden", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" },
 
-  // ✅ FIXED TABLE LAYOUT
   table: { width: "100%", borderCollapse: "collapse", background: "white", fontSize: "0.95rem", tableLayout: "fixed" },
   th: { background: "#f8fafc", padding: "14px 16px", textAlign: "left", fontSize: "0.8rem", fontWeight: "700", color: "#475569", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "1px solid #e2e8f0" },
   td: { padding: "14px 16px", borderBottom: "1px solid #f1f5f9", color: "#334155", verticalAlign: "top", wordWrap: "break-word" },
@@ -282,6 +281,11 @@ export default function ConstraintOverview() {
       setDraft({ ...draft, scope: newScope, target_id: "0", category: defaultCategory });
   };
 
+  // ✅ ADDED: Missing function to handle Category dropdown changes
+  const handleCategoryChange = (newCategory) => {
+      setDraft({ ...draft, category: newCategory });
+  };
+
   const toggleDay = (day) => {
       setBuilder(prev => {
           const days = prev.selectedDays.includes(day)
@@ -436,7 +440,6 @@ export default function ConstraintOverview() {
                     <table style={styles.table}>
                         <thead style={{background:'#f8fafc'}}>
                         <tr>
-                            {/* ✅ EXPLICIT WIDTHS TO ENSURE CONSISTENCY */}
                             <th style={{...styles.th, width: '16%'}}>Rule Name</th>
                             <th style={{...styles.th, width: '18%'}}>Scope & Target</th>
                             <th style={{...styles.th, width: '28%'}}>Description</th>
@@ -466,7 +469,6 @@ export default function ConstraintOverview() {
                                         "{c.rule_text}"
                                     </div>
                                 </td>
-                                {/* ✅ SEPARATE VALIDITY COLUMN */}
                                 <td style={styles.td}>
                                     {c.valid_from ? (
                                         <div style={{fontSize:'0.85rem', color:'#475569', fontWeight: '500'}}>
@@ -599,7 +601,6 @@ export default function ConstraintOverview() {
   );
 }
 
-// ✅ DELETE MODAL: Fixed Pacing and Box Model Styling
 function DeleteConfirmationModal({ title, msg, itemName, onClose, onConfirm }) {
     const [input, setInput] = useState("");
     const isMatch = input === "DELETE";

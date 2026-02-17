@@ -45,7 +45,7 @@ const styles = {
     boxShadow: "0 2px 8px rgba(0,0,0,0.08)"
   },
   listCardHover: { backgroundColor: "#f1f5f9" },
-  codeText: { fontWeight: "700", color: "#3b82f6", fontSize: "0.95rem" },
+  codeText: { fontWeight: "700", color: "#303030", fontSize: "0.95rem" },
   nameText: { fontWeight: "600", color: "#1e293b", lineHeight: "1.4" },
   programLink: { color: "#475569", cursor: "pointer", textDecoration: "underline", fontSize: "0.85rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
   centeredCell: { textAlign: "center", fontSize: "0.9rem", color: "#64748b" },
@@ -53,7 +53,7 @@ const styles = {
   catBadge: { padding: "4px 8px", borderRadius: "6px", fontSize: "0.75rem", fontWeight: "bold", textAlign: "center", textTransform: "uppercase", display: "inline-block" },
   catCore: { background: "#dbeafe", color: "#1e40af" },
   catElective: { background: "#fef3c7", color: "#92400e" },
-  catShared: { background: "#f3e8ff", color: "#6b21a8" },
+  catShared: { background: "#f3e8ff", color: "#1ad40d" },
   btn: { padding: "8px 16px", borderRadius: "6px", border: "none", cursor: "pointer", fontSize: "0.9rem", fontWeight: "500", transition: "0.2s" },
   primaryBtn: { background: "#3b82f6", color: "white" },
   actionContainer: { display: "flex", gap: "8px", justifyContent: "flex-end" },
@@ -72,7 +72,6 @@ const styles = {
     overflowY: "auto",
     boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)"
   },
-  // ✅ reusable: rows in the modal will wrap nicely on small screens
   formRow: { display: "flex", gap: "15px", flexWrap: "wrap", alignItems: "flex-start" },
 
   formGroup: { marginBottom: "15px" },
@@ -481,7 +480,7 @@ export default function ModuleOverview({ onNavigate }) {
               </button>
             </div>
 
-            {/* ✅ wraps on small screens */}
+            {/*  wraps on small screens */}
             <div style={styles.formRow}>
               <div style={{ ...styles.formGroup, flex: 1, minWidth: 220 }}>
                 <label style={styles.label}>Module Code</label>
@@ -503,7 +502,7 @@ export default function ModuleOverview({ onNavigate }) {
               </div>
             </div>
 
-            {/* ✅ wraps on small screens */}
+            {/*  wraps on small screens */}
             <div style={styles.formRow}>
               <div style={{ ...styles.formGroup, flex: 1, minWidth: 180 }}>
                 <label style={styles.label}>ECTS</label>
@@ -542,7 +541,7 @@ export default function ModuleOverview({ onNavigate }) {
               </div>
             </div>
 
-            {/* ✅ Assessment summary REMOVED from add/edit page (no field here) */}
+            {/*  Assessment summary REMOVED from add/edit page (no field here) */}
 
             <div style={styles.formRow}>
               <div style={{ ...styles.formGroup, flex: 1, minWidth: 240 }}>
@@ -654,7 +653,7 @@ export default function ModuleOverview({ onNavigate }) {
             <div style={{ ...styles.formGroup, background: '#f9f9f9', padding: '15px', borderRadius: '6px', border: '1px solid #eee' }}>
               <label style={{ ...styles.label, marginBottom: '10px' }}>Linked Specializations</label>
 
-              {/* ✅ wraps on small screens */}
+              {/*  wraps on small screens */}
               <div style={{ display: 'flex', gap: '10px', marginBottom: '15px', flexWrap: "wrap" }}>
                 <select
                   style={{ ...styles.select, marginBottom: 0, flex: "1 1 260px", minWidth: 240 }}
