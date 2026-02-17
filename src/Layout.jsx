@@ -85,7 +85,7 @@ const Layout = ({ activeTab, setActiveTab, children, currentUserRole, setCurrent
           {!isStudent && (
             <>
               <div className="nav-section-title">Facilities</div>
-              <NavLink id="rooms" label="Rooms" rolesAllowed={["pm"]} />
+               <NavLink id="rooms" label="Rooms" rolesAllowed={["admin", "pm", "lecturer"]} />
             </>
           )}
 
