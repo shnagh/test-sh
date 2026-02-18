@@ -19,6 +19,9 @@ from .routers.semesters import router as semesters_router
 from .routers.offered_modules import router as offered_modules_router
 from .routers.schedule import router as schedule_router
 
+# ✅ ADD THIS
+from .routers.domains import router as domains_router
+
 
 try:
     models.Base.metadata.create_all(bind=engine)
@@ -58,6 +61,9 @@ app.include_router(rooms_router)
 app.include_router(constraints_router)
 app.include_router(availabilities_router)
 app.include_router(semesters_router)
+
+# ✅ ADD THIS (anywhere after app is created)
+app.include_router(domains_router)
 
 # ACTIVAMOS TUS FUNCIONALIDADES:
 app.include_router(offered_modules_router)
