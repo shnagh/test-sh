@@ -10,13 +10,11 @@ router = APIRouter(prefix="/domains", tags=["domains"])
 
 
 def _normalize(name: str) -> str:
-    n = (name or "").strip().lower()
+    n = (name or "").strip()
     if not n:
         raise HTTPException(status_code=400, detail="Domain name cannot be empty.")
-    # very light validation (no DB schema changes)
-    if " " in n or "@" in n:
-        raise HTTPException(status_code=400, detail="Domain name must look like 'mdh.de' (no spaces, no @).")
     return n
+
 
 
 @router.get("/", response_model=List[schemas.DomainResponse])

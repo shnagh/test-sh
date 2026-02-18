@@ -324,22 +324,34 @@ export default function LecturerOverview() {
 
   // ✅ Create domain in DB, then reload domains and select it
   async function confirmAddDomain() {
-    const formatted = (newDomain || "").trim().toLowerCase();
+  const formatted = (newDomain || "").trim();
 
-    if (!formatted) {
-      setDomainError("Domain name cannot be empty.");
-      return;
-    }
-
-    try {
-      const created = await api.createDomain({ name: formatted });
-      await loadAll();
-      setDraft((prev) => ({ ...prev, domain_id: String(created.id) }));
-      closeDomainModal();
-    } catch (e) {
-      setDomainError(e.message || "Failed to create domain");
-    }
+  if (!formatted) {
+    setDomainError("Domain name cannot be empty.");
+    return;
   }
+
+  try {
+    // ✅ Save to DB
+    const created = await api.createDomain({ name: formatted });
+
+    // ✅ Use returned name if backend normalized it
+    const name = (created?.name || formatted).trim();
+
+    // ✅ Update dropdown list
+    const updated = [...new Set([...domains, name])].sort((a, b) => a.localeCompare(b));
+    setDomains(updated);
+
+    // ✅ Select it in the lecturer form
+    setDraft({ ...draft, domain: name });
+
+    closeDomainModal();
+  } catch (e) {
+    // show backend detail but clean
+    setDomainError(e.message?.replace(/^400\s-\s*/, "") || "Error creating domain.");
+  }
+}
+
 
   async function remove(id) {
     if (!window.confirm("Are you sure you want to delete this lecturer?")) return;
@@ -663,10 +675,12 @@ export default function LecturerOverview() {
                         if (e.key === "Enter") confirmAddDomain();
                         if (e.key === "Escape") closeDomainModal();
                       }}
-                      placeholder="e.g., mediadesign.de"
+                      placeholder="Type a domain name..."
+
                     />
                     {domainError ? <div style={styles.dangerText}>{domainError}</div> : null}
-                    <div style={styles.hint}>This saves it in the database and adds it to the dropdown.</div>
+                   <div style={styles.hint}>Search or create a domain.</div>
+
                   </div>
 
                   <div style={styles.miniFooter}>
