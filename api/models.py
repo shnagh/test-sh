@@ -71,7 +71,6 @@ class Module(Base):
     assessment_type = Column(String, nullable=True)
     semester = Column(Integer, nullable=False)
     category = Column(String, nullable=True)
-    # ✅ FIX: Added ondelete="CASCADE"
     program_id = Column(Integer, ForeignKey("study_programs.id", ondelete="CASCADE"), nullable=True)
 
     specializations = relationship("Specialization", secondary=module_specializations, back_populates="modules")
@@ -81,7 +80,6 @@ class Module(Base):
 class Specialization(Base):
     __tablename__ = "specializations"
     id = Column(Integer, primary_key=True, index=True)
-    # ✅ FIX: Added ondelete="CASCADE"
     program_id = Column(Integer, ForeignKey("study_programs.id", ondelete="CASCADE"))
     name = Column(String, nullable=False)
     acronym = Column(String, nullable=False)

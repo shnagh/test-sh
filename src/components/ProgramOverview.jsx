@@ -620,8 +620,8 @@ function ProgramWorkspace({ program, lecturers, specializations, modules, onBack
       {showDeleteModal && (
         <DeleteConfirmationModal
             title="Delete Program?"
-            // ✅ FIX: Strong explicit warning about cascading delete
-            msg="⚠️ WARNING: This action cannot be undone. It will permanently delete this program AND cascade delete ALL modules and specializations associated with it."
+
+            msg="⚠️ WARNING: This action cannot be undone. It will permanently delete this program AND delete ALL modules and specializations associated with it."
             itemName={program.name}
             onClose={() => setShowDeleteModal(false)}
             onConfirm={() => {
